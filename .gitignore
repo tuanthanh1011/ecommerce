@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# turborepo
+.turbo/
+
+# next.js
+.next/
+out/
+
+# nest / build output
+dist/
+
+# env files (each app keeps its own .env.example committed)
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+coverage/
+
+# local Claude Code tooling (skills/plugins cache, not project source)
+.claude/
