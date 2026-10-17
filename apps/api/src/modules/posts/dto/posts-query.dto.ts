@@ -10,6 +10,14 @@ export class PostsQueryDto extends PaginationQueryDto {
   @IsEnum(PostType)
   type?: PostType;
 
+  @ApiPropertyOptional({
+    enum: PostType,
+    description: 'Loại trừ một loại bài (vd. tách "Cho đi" khỏi "Tin tức")',
+  })
+  @IsOptional()
+  @IsEnum(PostType)
+  excludeType?: PostType;
+
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Boolean)

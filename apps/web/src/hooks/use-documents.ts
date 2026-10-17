@@ -9,6 +9,7 @@ export interface DocumentItem {
   content: string | null;
   fileId: string | null;
   file: { id: string; url: string; originalFileName: string | null } | null;
+  updatedAt: string;
 }
 
 export interface DocumentInput {

@@ -51,3 +51,8 @@ export enum MediaType {
   DOCUMENT = 'DOCUMENT',
   OTHER = 'OTHER',
 }
+
+export enum AdminRole {
+  ADMIN = 'ADMIN',
+  EMPLOYEE = 'EMPLOYEE',
+}

@@ -16,6 +16,45 @@ services:
       timeout: 5s
       retries: 10
 
+  garage:
+    image: dxflrs/garage:v2.4.1
+    restart: unless-stopped
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY_ID}
+      GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_ACCESS_KEY}
+      GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET_NAME:-media}
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    volumes:
+      - ./infra/garage/garage.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    ports:
+      - '3900:3900' # S3 API — presigned PUT uploads go straight here from the browser
+      - '3902:3902' # public website endpoint — serves uploaded files (GET only)
+    healthcheck:
+      test: ['CMD', '/garage', 'status']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Dev-only admin UI for Garage (buckets, keys, object browser). Reads the
+  # admin token / S3 region from garage.toml; bound to localhost since it
+  # has full admin rights. Not included in docker-compose.prod.yml.
+  garage-webui:
+    image: khairul169/garage-webui:latest
+    restart: unless-stopped
+    environment:
+      CONFIG_PATH: /etc/garage.toml
+      API_BASE_URL: http://garage:3903
+      S3_ENDPOINT_URL: http://garage:3900
+    volumes:
+      - ./infra/garage/garage.toml:/etc/garage.toml:ro
+    depends_on:
+      garage:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:3909:3909'
+
   api:
     build:
       context: .
@@ -25,6 +64,8 @@ services:
       - .env
     depends_on:
       postgres:
+        condition: service_healthy
+      garage:
         condition: service_healthy
     ports:
       - '3001:3001'
@@ -43,3 +84,5 @@ services:
 
 volumes:
   pgdata:
+  garage_meta:
+  garage_data:

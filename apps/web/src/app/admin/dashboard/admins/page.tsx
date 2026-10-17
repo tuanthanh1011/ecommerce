@@ -50,6 +50,7 @@ export default function AdminsPage() {
     },
     {
       id: "role",
+      meta: { hideBelow: "sm" },
       header: "Vai trò",
       cell: () => (
         <span className="inline-flex items-center gap-1.5 text-[13px]">
@@ -60,6 +61,7 @@ export default function AdminsPage() {
     },
     {
       accessorKey: "isActive",
+      meta: { hideBelow: "md" },
       header: "Trạng thái",
       cell: ({ row }) => (
         <StatusBadge tone={row.original.isActive ? "success" : "danger"}>

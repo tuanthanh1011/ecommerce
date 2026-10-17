@@ -46,6 +46,7 @@ export default function PostsPage() {
     },
     {
       accessorKey: "type",
+      meta: { hideBelow: "sm" },
       header: "Chuyên mục",
       cell: ({ row }) => (
         <span className={toneChip(POST_TYPE_TONES[row.original.type])}>
@@ -55,6 +56,7 @@ export default function PostsPage() {
     },
     {
       accessorKey: "publishedAt",
+      meta: { hideBelow: "md" },
       header: "Ngày đăng",
       cell: ({ row }) => (
         <span className="text-[13px] text-muted-foreground tabular-nums">
@@ -64,6 +66,7 @@ export default function PostsPage() {
     },
     {
       accessorKey: "isPublished",
+      meta: { hideBelow: "sm" },
       header: "Trạng thái",
       cell: ({ row }) => (
         <StatusBadge tone={row.original.isPublished ? "success" : "warning"}>

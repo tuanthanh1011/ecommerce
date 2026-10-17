@@ -11,7 +11,6 @@ import {
   FileClock,
   ImageIcon,
   Loader2,
-  Newspaper,
   PenLine,
   Save,
   Send,
@@ -27,7 +26,6 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/common/form";
 import { ToggleRow } from "@/components/common/choice";
 import { FormActionBar } from "@/components/common/form-action-bar";
-import { PreviewCard } from "@/components/common/preview-card";
 import { ImageUploader } from "@/components/upload/image-uploader";
 import { TiptapEditor } from "@/components/rich-text/tiptap-editor";
 import { cleanInput } from "@/lib/clean";
@@ -38,9 +36,11 @@ import {
   useUpdatePost,
 } from "@/hooks/use-posts";
 import { PostType, POST_TYPE_LABELS, POST_TYPE_TONES } from "@/lib/constants";
-import { TONES, toneChip } from "@/lib/tones";
+import { TONES } from "@/lib/tones";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { PostCard } from "@/components/site/cards";
+import { SitePreview } from "@/components/site/site-preview";
 
 const postSchema = z.object({
   title: z.string().min(1, "Bắt buộc"),
@@ -250,19 +250,17 @@ function PostFormInner() {
                 />
               </FormSection>
 
-              <PreviewCard
-                image={cover?.url}
-                fallbackIcon={Newspaper}
-                imageClassName="aspect-video"
-                chip={
-                  <span className={toneChip(POST_TYPE_TONES[previewType])}>
-                    {POST_TYPE_LABELS[previewType]}
-                  </span>
-                }
-                title={previewTitle}
-                titlePlaceholder="Tiêu đề bài viết"
-                body={excerpt}
-              />
+              <SitePreview>
+                <PostCard
+                  post={{
+                    title: previewTitle || "Tiêu đề bài viết",
+                    type: previewType,
+                    coverImage: cover ? { id: "preview", url: cover.url } : null,
+                    excerpt: excerpt || null,
+                    publishedAt: post?.publishedAt ?? null,
+                  }}
+                />
+              </SitePreview>
             </>
           }
         />

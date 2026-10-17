@@ -13,6 +13,9 @@ RUN npm run build --workspace=api
 
 FROM base AS production
 ENV NODE_ENV=production
+# pg_dump (matching the postgres:16-alpine server) is needed for the nightly
+# backup job (see modules/backups) — not for normal API traffic.
+RUN apk add --no-cache postgresql16-client
 COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json

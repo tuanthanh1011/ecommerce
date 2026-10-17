@@ -1,11 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import msFn = require('ms');
+import ms from 'ms';
 import { Admin } from '../admins/entities/admin.entity';
+import { toPublicAdmin } from '../admins/admin-public';
 import { RefreshToken } from './entities/refresh-token.entity';
 
 export interface TokenPair {
@@ -41,7 +42,7 @@ export class AuthService {
   ): Promise<TokenPair & { admin: Partial<Admin> }> {
     const admin = await this.validateAdmin(email, password);
     const tokens = await this.issueTokenPair(admin);
-    return { ...tokens, admin: this.sanitizeAdmin(admin) };
+    return { ...tokens, admin: toPublicAdmin(admin) };
   }
 
   async refresh(refreshToken: string): Promise<TokenPair> {
@@ -112,12 +113,12 @@ export class AuthService {
 
   private async issueTokenPair(admin: Admin): Promise<TokenPair> {
     const accessToken = this.jwtService.sign(
-      { sub: admin.id, email: admin.email },
+      { sub: admin.id, email: admin.email, role: admin.role },
       {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
         expiresIn: this.configService.get<string>(
           'JWT_ACCESS_EXPIRES_IN',
-        ) as any,
+        ) as JwtSignOptions['expiresIn'],
       },
     );
 
@@ -128,12 +129,14 @@ export class AuthService {
       { sub: admin.id },
       {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: refreshExpiresIn as any,
+        expiresIn: refreshExpiresIn as JwtSignOptions['expiresIn'],
       },
     );
 
     const tokenHash = await bcrypt.hash(refreshToken, 10);
-    const expiresAt = new Date(Date.now() + (msFn as any)(refreshExpiresIn));
+    const expiresAt = new Date(
+      Date.now() + ms(refreshExpiresIn as ms.StringValue),
+    );
 
     const row = this.refreshTokensRepo.create({
       adminId: admin.id,
@@ -144,10 +147,5 @@ export class AuthService {
     await this.refreshTokensRepo.save(row);
 
     return { accessToken, refreshToken };
-  }
-
-  private sanitizeAdmin(admin: Admin): Partial<Admin> {
-    const { passwordHash: _passwordHash, ...rest } = admin;
-    return rest;
   }
 }

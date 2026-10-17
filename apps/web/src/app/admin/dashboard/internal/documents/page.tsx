@@ -9,7 +9,8 @@ import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/common/page-header";
 import { Segmented } from "@/components/common/segmented";
 import { TitleCell } from "@/components/common/thumb";
-import { EditAction, RowActions } from "@/components/common/row-actions";
+import { EditAction, RowActions, ViewAction } from "@/components/common/row-actions";
+import { useIsReadOnly } from "@/hooks/use-auth";
 import { DeleteButton } from "@/components/common/confirm-dialog";
 import {
   useDeleteDocument,
@@ -33,6 +34,8 @@ export default function DocumentsPage() {
 
   const all = data ?? [];
   const rows = category === "ALL" ? all : all.filter((d) => d.category === category);
+
+  const readOnly = useIsReadOnly();
 
   const columns: ColumnDef<DocumentItem>[] = [
     {
@@ -60,6 +63,7 @@ export default function DocumentsPage() {
     },
     {
       accessorKey: "category",
+      meta: { hideBelow: "sm" },
       header: "Danh mục",
       cell: ({ row }) => (
         <span className={toneChip(DOCUMENT_CATEGORY_TONES[row.original.category])}>
@@ -69,6 +73,7 @@ export default function DocumentsPage() {
     },
     {
       id: "file",
+      meta: { hideBelow: "md" },
       header: "Đính kèm",
       cell: ({ row }) =>
         row.original.file ? (
@@ -92,6 +97,10 @@ export default function DocumentsPage() {
       header: "",
       cell: ({ row }) => (
         <RowActions>
+          {readOnly ? (
+            <ViewAction href={`/admin/dashboard/internal/documents/form/?id=${row.original.id}`} />
+          ) : (
+            <>
           <EditAction href={`/admin/dashboard/internal/documents/form/?id=${row.original.id}`} />
           <DeleteButton
             itemLabel={row.original.title}
@@ -104,6 +113,8 @@ export default function DocumentsPage() {
               }
             }}
           />
+            </>
+          )}
         </RowActions>
       ),
     },
@@ -114,10 +125,12 @@ export default function DocumentsPage() {
       <PageHeader
         module="/admin/dashboard/internal/documents"
         actions={
-          <LinkButton href="/admin/dashboard/internal/documents/form/">
-            <Plus />
-            Thêm tài liệu
-          </LinkButton>
+          readOnly ? undefined : (
+            <LinkButton href="/admin/dashboard/internal/documents/form/">
+              <Plus />
+              Thêm tài liệu
+            </LinkButton>
+          )
         }
       />
       <DataTable
@@ -144,7 +157,7 @@ export default function DocumentsPage() {
           icon: FileText,
           title: "Chưa có tài liệu",
           description: "Lưu quy trình, công thức và tiêu chuẩn để cả đội cùng tra cứu.",
-          action: (
+          action: !readOnly && (
             <LinkButton href="/admin/dashboard/internal/documents/form/" variant="outline">
               <Plus />
               Thêm tài liệu

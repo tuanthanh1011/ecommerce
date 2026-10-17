@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { CalendarDays, Clock, MapPin, Plus } from "lucide-react";
@@ -9,8 +10,10 @@ import { DataTable } from "@/components/data-table/data-table";
 import { PageHeader } from "@/components/common/page-header";
 import { Segmented } from "@/components/common/segmented";
 import { StatusBadge } from "@/components/common/status-badge";
-import { EditAction, RowActions } from "@/components/common/row-actions";
+import { EditAction, RowActions, ViewAction } from "@/components/common/row-actions";
 import { DeleteButton } from "@/components/common/confirm-dialog";
+import { useIsReadOnly } from "@/hooks/use-auth";
+import { MonthCalendar, type CalendarEvent } from "@/components/common/month-calendar";
 import {
   useDeleteScheduleEntry,
   useScheduleQuery,
@@ -33,8 +36,17 @@ function time(value: string) {
 }
 
 type PhaseFilter = "upcoming" | "past" | "all";
+type View = "list" | "calendar";
 
-export default function SchedulePage() {
+function SchedulePageInner() {
+  const router = useRouter();
+  const pathname = usePathname();
+  // Kept in the URL so coming back from the edit form returns to the same view.
+  const readOnly = useIsReadOnly();
+  const view: View = useSearchParams().get("view") === "calendar" ? "calendar" : "list";
+  const setView = (next: View) =>
+    router.replace(next === "calendar" ? `${pathname}?view=calendar` : pathname, { scroll: false });
+
   const { data, isLoading } = useScheduleQuery();
   const deleteEntry = useDeleteScheduleEntry();
   const [filter, setFilter] = useState<PhaseFilter>("upcoming");
@@ -47,6 +59,15 @@ export default function SchedulePage() {
   const upcoming = all.filter((e) => phaseOf(e, now) !== "past");
   const past = all.filter((e) => phaseOf(e, now) === "past").reverse();
   const rows = filter === "upcoming" ? upcoming : filter === "past" ? past : all;
+
+  const calendarEvents: CalendarEvent[] = all.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start: new Date(e.startAt),
+    end: new Date(e.endAt ?? e.startAt),
+    href: `/admin/dashboard/internal/schedule/form/?id=${e.id}`,
+    tone: phaseOf(e, now),
+  }));
 
   const columns: ColumnDef<ScheduleEntry>[] = [
     {
@@ -93,6 +114,7 @@ export default function SchedulePage() {
     },
     {
       id: "time",
+      meta: { hideBelow: "sm" },
       header: "Thời gian",
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5 text-[13px] tabular-nums">
@@ -104,6 +126,7 @@ export default function SchedulePage() {
     },
     {
       accessorKey: "location",
+      meta: { hideBelow: "md" },
       header: "Địa điểm",
       cell: ({ row }) =>
         row.original.location ? (
@@ -117,6 +140,7 @@ export default function SchedulePage() {
     },
     {
       id: "phase",
+      meta: { hideBelow: "sm" },
       header: "Trạng thái",
       cell: ({ row }) => {
         const phase = phaseOf(row.original, now);
@@ -135,6 +159,10 @@ export default function SchedulePage() {
       header: "",
       cell: ({ row }) => (
         <RowActions>
+          {readOnly ? (
+            <ViewAction href={`/admin/dashboard/internal/schedule/form/?id=${row.original.id}`} />
+          ) : (
+            <>
           <EditAction href={`/admin/dashboard/internal/schedule/form/?id=${row.original.id}`} />
           <DeleteButton
             itemLabel={row.original.title}
@@ -147,6 +175,8 @@ export default function SchedulePage() {
               }
             }}
           />
+            </>
+          )}
         </RowActions>
       ),
     },
@@ -157,12 +187,31 @@ export default function SchedulePage() {
       <PageHeader
         module="/admin/dashboard/internal/schedule"
         actions={
-          <LinkButton href="/admin/dashboard/internal/schedule/form/">
-            <Plus />
-            Thêm lịch
-          </LinkButton>
+          <div className="flex items-center gap-3">
+            <Segmented
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "list", label: "Danh sách" },
+                { value: "calendar", label: "Lịch tháng" },
+              ]}
+            />
+            {!readOnly && (
+              <LinkButton href="/admin/dashboard/internal/schedule/form/">
+                <Plus />
+                Thêm lịch
+              </LinkButton>
+            )}
+          </div>
         }
       />
+      {view === "calendar" ? (
+        <MonthCalendar
+          events={calendarEvents}
+          now={now}
+          createHref={readOnly ? undefined : (date) => `/admin/dashboard/internal/schedule/form/?date=${date}`}
+        />
+      ) : (
       <DataTable
         columns={columns}
         data={rows}
@@ -184,7 +233,7 @@ export default function SchedulePage() {
           icon: CalendarDays,
           title: filter === "past" ? "Chưa có sự kiện nào đã qua" : "Không có lịch sắp tới",
           description: "Lên lịch họp, đào tạo hoặc sự kiện cho cả đội.",
-          action: filter !== "past" && (
+          action: filter !== "past" && !readOnly && (
             <LinkButton href="/admin/dashboard/internal/schedule/form/" variant="outline">
               <Plus />
               Thêm lịch
@@ -192,6 +241,15 @@ export default function SchedulePage() {
           ),
         }}
       />
+      )}
     </div>
+  );
+}
+
+export default function SchedulePage() {
+  return (
+    <Suspense fallback={null}>
+      <SchedulePageInner />
+    </Suspense>
   );
 }

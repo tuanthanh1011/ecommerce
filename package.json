@@ -9,7 +9,11 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "seed": "turbo run seed"
+    "seed": "turbo run seed",
+    "migration:generate": "npm run migration:generate -w api --",
+    "migration:run": "npm run migration:run -w api",
+    "migration:revert": "npm run migration:revert -w api",
+    "garage:setup": "sh infra/garage/setup.sh"
   },
   "devDependencies": {
     "turbo": "^2.5.8"

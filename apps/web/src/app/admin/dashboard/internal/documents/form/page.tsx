@@ -26,6 +26,11 @@ import { FormActionBar } from "@/components/common/form-action-bar";
 import { PreviewFrame, PreviewText } from "@/components/common/preview-card";
 import { FileUploader } from "@/components/upload/file-uploader";
 import { TiptapEditor } from "@/components/rich-text/tiptap-editor";
+import { Fact, ReadOnlyBlocked, ReadOnlyView } from "@/components/common/read-only-view";
+import { CalendarDays, Download, Tag } from "lucide-react";
+import { formatDate } from "@/lib/format";
+import { RichContent } from "@/components/site/rich-content";
+import { useIsReadOnly } from "@/hooks/use-auth";
 import { cleanInput } from "@/lib/clean";
 import {
   useCreateDocument,
@@ -121,7 +126,7 @@ function DocumentFormInner() {
         module="/admin/dashboard/internal/documents"
         backHref="/admin/dashboard/internal/documents"
         title={isEdit ? document?.title ?? "Sửa tài liệu" : "Thêm tài liệu"}
-        description="Tài liệu nội bộ chỉ hiển thị cho nhân sự S.t"
+        description="Tài liệu nội bộ chỉ hiển thị cho nhân sự S+"
         actions={
           <>
             <LinkButton href="/admin/dashboard/internal/documents" variant="outline">
@@ -232,10 +237,56 @@ function DocumentFormInner() {
   );
 }
 
+function DocumentDetail() {
+  const id = useSearchParams().get("id") ?? undefined;
+  const { data: doc, isLoading } = useDocumentQuery(id);
+  if (isLoading) return <FormSkeleton />;
+  if (!doc) return <ReadOnlyBlocked title="Không có tài liệu này" />;
+  return (
+    <ReadOnlyView
+      module="/admin/dashboard/internal/documents"
+      backHref="/admin/dashboard/internal/documents"
+      title={doc.title}
+      kicker="Tài liệu & vận hành"
+      facts={
+        <>
+          <Fact icon={Tag} label="Danh mục">
+            {DOCUMENT_CATEGORY_LABELS[doc.category]}
+          </Fact>
+          <Fact icon={CalendarDays} label="Cập nhật lần cuối">
+            {formatDate(doc.updatedAt)}
+          </Fact>
+          {doc.file && (
+            <Fact icon={Download} label="Tệp đính kèm">
+              <a
+                href={doc.file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {doc.file.originalFileName ?? "Tải tệp xuống"}
+              </a>
+            </Fact>
+          )}
+        </>
+      }
+    >
+      {doc.content ? (
+        <RichContent html={doc.content} />
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Tài liệu này chỉ có tệp đính kèm — tải ở khung Thông tin bên cạnh.
+        </p>
+      )}
+    </ReadOnlyView>
+  );
+}
+
 export default function DocumentFormPage() {
+  const readOnly = useIsReadOnly();
   return (
     <Suspense fallback={<FormSkeleton />}>
-      <DocumentFormInner />
+      {readOnly ? <DocumentDetail /> : <DocumentFormInner />}
     </Suspense>
   );
 }

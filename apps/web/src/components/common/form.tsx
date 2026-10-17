@@ -102,7 +102,7 @@ export function FormLayout({
 }) {
   if (!side) return <div className="max-w-3xl space-y-6">{main}</div>;
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="min-w-0 space-y-6">{main}</div>
       <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">{side}</div>
     </div>
@@ -120,7 +120,7 @@ export function FormSkeleton() {
           <div className="h-3.5 w-72 rounded bg-muted" />
         </div>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="h-96 rounded-xl border bg-card" />
         <div className="h-56 rounded-xl border bg-card" />
       </div>

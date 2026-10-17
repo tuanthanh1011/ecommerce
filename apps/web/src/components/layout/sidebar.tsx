@@ -2,31 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronsLeft, Coffee } from "lucide-react";
+import { ChevronsLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/common/brand-logo";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { NAV_GROUPS, findNavItemForPath } from "./nav-items";
+import { navGroupsForRole, findNavItemForPath, homeHrefForRole } from "./nav-items";
+import { useCurrentAdmin } from "@/hooks/use-auth";
 import { useSidebar } from "./sidebar-context";
 
 function BrandMark({ collapsed }: { collapsed?: boolean }) {
+  const { data: currentAdmin } = useCurrentAdmin();
   return (
     <Link
-      href="/admin/dashboard"
+      href={homeHrefForRole(currentAdmin?.role)}
       className="flex items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
     >
-      <span className="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-amber-400 via-amber-500 to-orange-600 text-white shadow-lg shadow-amber-900/40 ring-1 ring-white/20">
-        <Coffee className="size-[18px]" strokeWidth={2.25} />
-      </span>
-      {!collapsed && (
-        <span className="flex min-w-0 flex-col leading-tight">
-          <span className="text-[15px] font-semibold tracking-tight text-white">
-            S.t CMS
-          </span>
-          <span className="text-[11px] text-sidebar-foreground/55">
-            Content Studio
-          </span>
-        </span>
-      )}
+      <BrandLogo
+        compact={collapsed}
+        subtitle="CMS · Content Studio"
+        className="text-white"
+        subtitleClassName="text-sidebar-foreground"
+      />
     </Link>
   );
 }
@@ -40,10 +36,12 @@ function NavList({
 }) {
   const pathname = usePathname();
   const activeItem = findNavItemForPath(pathname);
+  const { data: currentAdmin } = useCurrentAdmin();
+  const groups = navGroupsForRole(currentAdmin?.role);
 
   return (
     <nav className="scrollbar-thin flex-1 space-y-6 overflow-y-auto px-3 py-4">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.title}>
           {collapsed ? (
             <div className="mx-auto mb-2 h-px w-6 bg-sidebar-border first:hidden" />

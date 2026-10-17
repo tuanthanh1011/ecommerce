@@ -62,7 +62,7 @@ function Hero() {
           {firstName ? `, ${firstName}` : ""} <span className="inline-block">☕</span>
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-stone-300 sm:text-[15px]">
-          Hôm nay bạn muốn cập nhật gì cho website S.t? Mọi thay đổi sẽ hiển thị
+          Hôm nay bạn muốn cập nhật gì cho website S+? Mọi thay đổi sẽ hiển thị
           ngay sau khi lưu.
         </p>
         <div className="mt-6 flex flex-wrap gap-2.5">
@@ -388,7 +388,7 @@ export default function DashboardHomePage() {
         <StatCard href="/admin/dashboard/jobs" value={jobs.data?.total} hint="Tin tuyển dụng" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <RecentPosts />
         <div className="space-y-6">
           <UpcomingSchedule />

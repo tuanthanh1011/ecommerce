@@ -14,9 +14,12 @@ import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
 import { ReorderTeamMembersDto } from './dto/reorder-team-members.dto';
 import { TeamMemberGroup } from '../../common/enums';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminRole } from '../../common/enums';
 
 @ApiBearerAuth()
 @ApiTags('team-members')
+@Roles(AdminRole.ADMIN)
 @Controller('admin/story/team-members')
 export class TeamMembersController {
   constructor(private teamMembersService: TeamMembersService) {}

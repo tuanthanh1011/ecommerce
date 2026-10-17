@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { MediaService } from './media.service';
 import { PresignDto } from './dto/presign.dto';
 import { CreateMediaDto } from './dto/create-media.dto';
@@ -18,6 +19,9 @@ import { CreateMediaDto } from './dto/create-media.dto';
 export class MediaController {
   constructor(private mediaService: MediaService) {}
 
+  // Each presigned URL is a write capability — keep generation rate limited
+  // independently of how many actual uploads follow.
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Post('presign')
   presign(@Body() dto: PresignDto) {
     return this.mediaService.presign(dto);

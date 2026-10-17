@@ -62,11 +62,6 @@ export function useTeamMembersQuery(group?: TeamMemberGroup) {
   });
 }
 
-export function useTeamMemberQuery(id: string | undefined) {
-  const { data } = useTeamMembersQuery();
-  return data?.find((m) => m.id === id);
-}
-
 export function useCreateTeamMember() {
   const queryClient = useQueryClient();
   return useMutation({

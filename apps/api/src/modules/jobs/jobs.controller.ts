@@ -13,9 +13,12 @@ import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 import { JobsQueryDto } from './dto/jobs-query.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminRole } from '../../common/enums';
 
 @ApiBearerAuth()
 @ApiTags('jobs')
+@Roles(AdminRole.ADMIN)
 @Controller('admin/jobs')
 export class JobsController {
   constructor(private jobsService: JobsService) {}

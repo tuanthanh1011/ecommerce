@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { randomUUID } from 'node:crypto';
 import { Media } from './entities/media.entity';
 import { MediaType } from '../../common/enums';
-import { R2Service } from './r2.service';
+import { StorageService } from './storage.service';
 import { PresignDto } from './dto/presign.dto';
 import { CreateMediaDto } from './dto/create-media.dto';
 
@@ -12,30 +17,40 @@ import { CreateMediaDto } from './dto/create-media.dto';
 export class MediaService {
   constructor(
     @InjectRepository(Media) private mediaRepo: Repository<Media>,
-    private r2Service: R2Service,
+    private storageService: StorageService,
+    private configService: ConfigService,
   ) {}
 
   async presign(dto: PresignDto) {
+    const maxUploadSizeBytes = this.configService.get<number>(
+      'MAX_UPLOAD_SIZE_BYTES',
+    )!;
+    if (dto.sizeBytes > maxUploadSizeBytes) {
+      const maxMb = (maxUploadSizeBytes / (1024 * 1024)).toFixed(0);
+      throw new BadRequestException(
+        `Kích thước file vượt quá giới hạn cho phép (tối đa ${maxMb}MB)`,
+      );
+    }
     const safeName = dto.fileName
       .trim()
       .toLowerCase()
       .replace(/[^a-z0-9.\-_]+/g, '-');
     const key = `${randomUUID()}-${safeName}`;
-    const uploadUrl = await this.r2Service.getPresignedUploadUrl(
+    const uploadUrl = await this.storageService.getPresignedUploadUrl(
       key,
       dto.mimeType,
     );
     return {
       uploadUrl,
       key,
-      publicUrl: this.r2Service.getPublicUrl(key),
+      publicUrl: this.storageService.getPublicUrl(key),
     };
   }
 
   async create(dto: CreateMediaDto): Promise<Media> {
     const media = this.mediaRepo.create({
       key: dto.key,
-      url: this.r2Service.getPublicUrl(dto.key),
+      url: this.storageService.getPublicUrl(dto.key),
       mimeType: dto.mimeType,
       sizeBytes: dto.sizeBytes ?? null,
       originalFileName: dto.originalFileName ?? null,
@@ -57,7 +72,7 @@ export class MediaService {
   async remove(id: string): Promise<void> {
     const media = await this.mediaRepo.findOne({ where: { id } });
     if (!media) throw new NotFoundException('Media not found');
-    await this.r2Service.deleteObject(media.key);
+    await this.storageService.deleteObject(media.key);
     await this.mediaRepo.remove(media);
   }
 }

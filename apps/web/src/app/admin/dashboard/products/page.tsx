@@ -61,28 +61,34 @@ export default function ProductsPage() {
     },
     {
       accessorKey: "category",
+      meta: { hideBelow: "md" },
       header: "Danh mục",
       cell: ({ row }) => (
-        <span
-          className={toneChip(
-            row.original.category === ProductCategory.DRINK ? "amber" : "violet",
-          )}
-        >
-          {PRODUCT_CATEGORY_LABELS[row.original.category]}
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={toneChip(
+              row.original.category === ProductCategory.DRINK ? "amber" : "violet",
+            )}
+          >
+            {PRODUCT_CATEGORY_LABELS[row.original.category]}
+          </span>
+          {row.original.isNew && <span className={toneChip("rose")}>Mới</span>}
         </span>
       ),
     },
     {
       accessorKey: "price",
+      meta: { hideBelow: "sm" },
       header: "Giá",
       cell: ({ row }) => (
         <span className="font-medium text-foreground tabular-nums">
-          {formatPrice(row.original.price)}
+          {row.original.price ? formatPrice(row.original.price) : "Liên hệ"}
         </span>
       ),
     },
     {
       accessorKey: "status",
+      meta: { hideBelow: "md" },
       header: "Trạng thái",
       cell: ({ row }) => (
         <StatusBadge tone={row.original.status === "ACTIVE" ? "success" : "neutral"}>

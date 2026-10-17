@@ -1,12 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Coffee } from "lucide-react";
+import { useEffect, useSyncExternalStore } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/common/brand-logo";
 import { getAccessToken } from "@/lib/auth";
+import { useCurrentAdmin } from "@/hooks/use-auth";
+import { homeHrefForRole, isPathAllowedForRole } from "@/components/layout/nav-items";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { SidebarProvider } from "@/components/layout/sidebar-context";
+
+const noopSubscribe = () => () => {};
+
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+      <BrandLogo className="animate-pulse text-3xl text-[#960000]" />
+      Đang tải...
+    </div>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -14,25 +27,33 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const pathname = usePathname();
+  // false while prerendering/hydrating (so server and first client render
+  // match), then true once a token is found in localStorage.
+  const ready = useSyncExternalStore(
+    noopSubscribe,
+    () => !!getAccessToken(),
+    () => false,
+  );
+  const { data: currentAdmin, isLoading: adminLoading } = useCurrentAdmin();
 
   useEffect(() => {
-    if (!getAccessToken()) {
-      router.replace("/admin/login/");
-      return;
-    }
-    setReady(true);
+    if (!getAccessToken()) router.replace("/admin/login/");
   }, [router]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-        <span className="flex size-11 animate-pulse items-center justify-center rounded-xl bg-linear-to-br from-amber-400 to-orange-600 text-white shadow-lg shadow-amber-900/20">
-          <Coffee className="size-5" />
-        </span>
-        Đang tải...
-      </div>
-    );
+  // Defense-in-depth only — the API already rejects these requests for an
+  // Employee token. This just avoids flashing a forbidden page client-side.
+  useEffect(() => {
+    if (!ready || adminLoading || !currentAdmin) return;
+    if (!isPathAllowedForRole(pathname, currentAdmin.role)) {
+      router.replace(homeHrefForRole(currentAdmin.role));
+    }
+  }, [ready, adminLoading, currentAdmin, pathname, router]);
+
+  // Also hold the screen while a disallowed page is being redirected away
+  // from, so its queries never fire (and 403) for this role.
+  if (!ready || adminLoading || !isPathAllowedForRole(pathname, currentAdmin?.role)) {
+    return <LoadingScreen />;
   }
 
   return (

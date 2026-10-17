@@ -3,6 +3,10 @@ import type { Tone } from "./tones";
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
+// Must match the backend's MAX_UPLOAD_SIZE_BYTES default (apps/api/src/config/env.validation.ts).
+// This is a client-side UX check only — the server enforces the real limit.
+export const MAX_UPLOAD_SIZE_BYTES = 15 * 1024 * 1024;
+
 export enum ProductCategory {
   DRINK = "DRINK",
   MERCHANDISE = "MERCHANDISE",
@@ -23,7 +27,7 @@ export enum MerchandiseSubType {
 
 export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
   [ProductCategory.DRINK]: "Đồ uống",
-  [ProductCategory.MERCHANDISE]: "Vật phẩm S.t",
+  [ProductCategory.MERCHANDISE]: "Vật phẩm S+",
 };
 
 export const DRINK_SUB_TYPE_LABELS: Record<DrinkSubType, string> = {
@@ -43,11 +47,6 @@ export enum ProductStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
 }
-
-export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-  [ProductStatus.ACTIVE]: "Đang bán",
-  [ProductStatus.INACTIVE]: "Ẩn",
-};
 
 export enum PostType {
   ANNOUNCEMENT = "ANNOUNCEMENT",
@@ -107,4 +106,14 @@ export const DOCUMENT_CATEGORY_TONES: Record<DocumentCategory, Tone> = {
   [DocumentCategory.WORKFLOW]: "indigo",
   [DocumentCategory.RECIPE]: "amber",
   [DocumentCategory.QUALITY_STANDARD]: "emerald",
+};
+
+export enum AdminRole {
+  ADMIN = "ADMIN",
+  EMPLOYEE = "EMPLOYEE",
+}
+
+export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
+  [AdminRole.ADMIN]: "Quản trị viên",
+  [AdminRole.EMPLOYEE]: "Nhân viên",
 };

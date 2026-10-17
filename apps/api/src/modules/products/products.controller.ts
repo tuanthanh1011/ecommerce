@@ -15,9 +15,12 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { AttachPhotoDto } from './dto/attach-photo.dto';
 import { ReorderPhotosDto } from './dto/reorder-photos.dto';
 import { ProductsQueryDto } from './dto/products-query.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminRole } from '../../common/enums';
 
 @ApiBearerAuth()
 @ApiTags('products')
+@Roles(AdminRole.ADMIN)
 @Controller('admin/products')
 export class ProductsController {
   constructor(private productsService: ProductsService) {}

@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Admin } from './entities/admin.entity';
+import { toPublicAdmin } from './admin-public';
+import { AdminRole } from '../../common/enums';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 
@@ -16,7 +18,7 @@ export class AdminsService {
 
   async findAll(): Promise<Partial<Admin>[]> {
     const admins = await this.adminsRepo.find({ order: { createdAt: 'ASC' } });
-    return admins.map((a) => this.sanitize(a));
+    return admins.map((a) => toPublicAdmin(a));
   }
 
   async findOneOrFail(id: string): Promise<Admin> {
@@ -36,16 +38,17 @@ export class AdminsService {
       email: dto.email,
       fullName: dto.fullName,
       passwordHash,
+      role: dto.role ?? AdminRole.ADMIN,
     });
     await this.adminsRepo.save(admin);
-    return this.sanitize(admin);
+    return toPublicAdmin(admin);
   }
 
   async update(id: string, dto: UpdateAdminDto): Promise<Partial<Admin>> {
     const admin = await this.findOneOrFail(id);
     Object.assign(admin, dto);
     await this.adminsRepo.save(admin);
-    return this.sanitize(admin);
+    return toPublicAdmin(admin);
   }
 
   async updatePassword(id: string, password: string): Promise<void> {
@@ -58,10 +61,5 @@ export class AdminsService {
     const admin = await this.findOneOrFail(id);
     admin.isActive = false;
     await this.adminsRepo.save(admin);
-  }
-
-  private sanitize(admin: Admin): Partial<Admin> {
-    const { passwordHash: _passwordHash, ...rest } = admin;
-    return rest;
   }
 }

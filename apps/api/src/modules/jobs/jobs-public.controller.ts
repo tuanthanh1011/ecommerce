@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { JobsService } from './jobs.service';
@@ -16,7 +16,7 @@ export class JobsPublicController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.jobsService.findOneOrFail(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.jobsService.findPublicOrFail(id);
   }
 }

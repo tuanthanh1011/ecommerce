@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -48,5 +48,22 @@ export function EditAction({
     >
       <Pencil />
     </Button>
+  );
+}
+
+/** Eye icon for read-only users (Employees): opens the record's detail page. */
+export function ViewAction({ href, label = "Xem chi tiết" }: { href: string; label?: string }) {
+  return (
+    <Link
+      href={href}
+      title={label}
+      aria-label={label}
+      className={cn(
+        buttonVariants({ variant: "ghost", size: "icon-sm" }),
+        "text-muted-foreground hover:bg-sky-50 hover:text-sky-700 dark:hover:bg-sky-500/10 dark:hover:text-sky-300",
+      )}
+    >
+      <Eye />
+    </Link>
   );
 }

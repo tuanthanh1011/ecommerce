@@ -15,9 +15,12 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 import { AttachPhotoDto } from './dto/attach-photo.dto';
 import { ReorderPhotosDto } from './dto/reorder-photos.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminRole } from '../../common/enums';
 
 @ApiBearerAuth()
 @ApiTags('stores')
+@Roles(AdminRole.ADMIN)
 @Controller('admin/stores')
 export class StoresController {
   constructor(private storesService: StoresService) {}
