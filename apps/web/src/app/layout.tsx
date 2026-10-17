@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { displayFont } from "@/components/site/display-font";
 import { Providers } from "./providers";
 
 // Be Vietnam Pro is drawn for Vietnamese diacritics — crisp at small UI sizes.
@@ -17,15 +18,15 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "S.t Coffee",
-  description: "S.t — câu chuyện, cửa hàng, sản phẩm và tin tức.",
+  title: "S+ Coffee",
+  description: "S+ — câu chuyện, cửa hàng, sản phẩm và tin tức.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="vi"
-      className={`${sans.variable} ${mono.variable} h-full antialiased`}
+      className={`${sans.variable} ${mono.variable} ${displayFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>

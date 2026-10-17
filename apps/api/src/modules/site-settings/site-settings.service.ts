@@ -1,0 +1,72 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SiteSetting } from './entities/site-setting.entity';
+import { UpdateContactSettingsDto } from './dto/update-contact-settings.dto';
+import { UpdateHomeSettingsDto } from './dto/update-home-settings.dto';
+import {
+  DEFAULT_HOME_SETTINGS,
+  HomeSettings,
+  sanitizeHomeSettings,
+} from './home-settings';
+
+const CONTACT_KEY = 'contact';
+const HOME_KEY = 'home';
+const CONTACT_FIELDS = [
+  'phone',
+  'openingHours',
+  'closingMessage',
+  'facebookUrl',
+  'instagramUrl',
+  'chatUrl',
+] as const;
+
+export type ContactSettings = Partial<
+  Record<(typeof CONTACT_FIELDS)[number], string>
+>;
+
+@Injectable()
+export class SiteSettingsService {
+  constructor(
+    @InjectRepository(SiteSetting)
+    private settingsRepo: Repository<SiteSetting>,
+  ) {}
+
+  async getContact(): Promise<ContactSettings> {
+    const row = await this.settingsRepo.findOne({
+      where: { key: CONTACT_KEY },
+    });
+    return row?.value ?? {};
+  }
+
+  async updateContact(dto: UpdateContactSettingsDto): Promise<ContactSettings> {
+    // Whitelist + trim; blank strings are dropped so "empty" means "hidden".
+    const value: ContactSettings = {};
+    for (const field of CONTACT_FIELDS) {
+      const raw = dto[field]?.trim();
+      if (raw) value[field] = raw;
+    }
+    const row =
+      (await this.settingsRepo.findOne({ where: { key: CONTACT_KEY } })) ??
+      this.settingsRepo.create({ key: CONTACT_KEY });
+    row.value = value;
+    await this.settingsRepo.save(row);
+    return value;
+  }
+
+  /** Falls back to the defaults until an admin saves the home page for the first time. */
+  async getHome(): Promise<HomeSettings> {
+    const row = await this.settingsRepo.findOne({ where: { key: HOME_KEY } });
+    return row ? sanitizeHomeSettings(row.value) : DEFAULT_HOME_SETTINGS;
+  }
+
+  async updateHome(dto: UpdateHomeSettingsDto): Promise<HomeSettings> {
+    const value = sanitizeHomeSettings(dto);
+    const row =
+      (await this.settingsRepo.findOne({ where: { key: HOME_KEY } })) ??
+      this.settingsRepo.create({ key: HOME_KEY });
+    row.value = value as unknown as Record<string, unknown>;
+    await this.settingsRepo.save(row);
+    return value;
+  }
+}

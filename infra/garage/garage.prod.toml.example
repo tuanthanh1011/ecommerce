@@ -1,0 +1,33 @@
+# Garage config for PRODUCTION (docker-compose.prod.yml). Single-node by
+# design (matches the single-VPS deployment target) — redundancy for this
+# data comes from the daily Cloudflare R2 backup, not Garage replication.
+#
+# IMPORTANT before first deploy: replace the root_domain values below with a
+# real (sub)domain you control, point DNS at the VPS the same way you would
+# have for R2_PUBLIC_BASE_URL, and make sure whatever terminates TLS for
+# web/api on this VPS also covers this hostname on port 3902 (and 3900 for
+# presigned uploads — see README "Garage" section).
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret = "REPLACE_WITH_$(openssl rand -hex 32)"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.st-coffee.example.com"
+
+[s3_web]
+bind_addr = "[::]:3902"
+root_domain = ".web.st-coffee.example.com"
+index = "index.html"
+
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token = "REPLACE_WITH_$(openssl rand -base64 32)"
+metrics_token = "REPLACE_WITH_$(openssl rand -base64 32)"

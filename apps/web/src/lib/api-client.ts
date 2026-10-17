@@ -89,9 +89,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     } catch {
       // no body
     }
+    // Nest nests validation errors one level deeper (message.message).
+    const nested = (errBody as { message?: unknown } | null)?.message;
     const message =
-      (errBody as any)?.message?.message ??
-      (errBody as any)?.message ??
+      (nested as { message?: unknown } | null | undefined)?.message ??
+      nested ??
       res.statusText;
     throw new ApiError(
       res.status,

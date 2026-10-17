@@ -10,9 +10,12 @@ import {
   Megaphone,
   CalendarDays,
   Users,
+  Phone,
+  House,
   type LucideIcon,
 } from "lucide-react";
 import type { Tone } from "@/lib/tones";
+import { AdminRole } from "@/lib/constants";
 
 export interface NavItem {
   label: string;
@@ -26,11 +29,15 @@ export interface NavItem {
 export interface NavGroup {
   title: string;
   items: NavItem[];
+  /** Omit for both roles. Employee is scoped to "Nội bộ" content only. */
+  roles?: AdminRole[];
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Tổng quan",
+    // The dashboard is Admin-only: Employees are read-only and start in "Nội bộ".
+    roles: [AdminRole.ADMIN],
     items: [
       {
         label: "Dashboard",
@@ -43,13 +50,21 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "Nội dung công khai",
+    roles: [AdminRole.ADMIN],
     items: [
       {
-        label: "Câu chuyện S.t",
+        label: "Trang chủ",
+        href: "/admin/dashboard/home",
+        icon: House,
+        tone: "rose",
+        description: "Chỉnh nội dung từng phần của trang chủ website",
+      },
+      {
+        label: "Câu chuyện S+",
         href: "/admin/dashboard/story",
         icon: BookOpen,
         tone: "orange",
-        description: "Hướng đi, văn hoá và đội ngũ S.t",
+        description: "Hướng đi, văn hoá và đội ngũ S+",
       },
       {
         label: "Cửa hàng",
@@ -63,7 +78,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/admin/dashboard/products",
         icon: Coffee,
         tone: "amber",
-        description: "Thực đơn đồ uống và vật phẩm S.t",
+        description: "Thực đơn đồ uống và vật phẩm S+",
       },
       {
         label: "Tin tức",
@@ -78,6 +93,13 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Briefcase,
         tone: "violet",
         description: "Tin tuyển dụng đang mở và đã đóng",
+      },
+      {
+        label: "Thông tin liên hệ",
+        href: "/admin/dashboard/site-settings",
+        icon: Phone,
+        tone: "teal",
+        description: "Số điện thoại, giờ mở cửa và mạng xã hội ở chân trang",
       },
       {
         label: "Thư viện ảnh",
@@ -116,6 +138,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "Hệ thống",
+    roles: [AdminRole.ADMIN],
     items: [
       {
         label: "Tài khoản Admin",
@@ -143,4 +166,26 @@ export function findNavItemForPath(pathname: string | null): NavItem | undefined
   return [...NAV_ITEMS]
     .sort((a, b) => b.href.length - a.href.length)
     .find((i) => path === i.href || path.startsWith(`${i.href}/`));
+}
+
+export function navGroupsForRole(role: AdminRole | undefined): NavGroup[] {
+  if (!role) return NAV_GROUPS;
+  return NAV_GROUPS.filter((g) => !g.roles || g.roles.includes(role));
+}
+
+/** Longest-prefix match against the groups visible to this role. */
+export function isPathAllowedForRole(
+  pathname: string | null,
+  role: AdminRole | undefined,
+): boolean {
+  if (!pathname || !role) return true;
+  const path = pathname.replace(/\/$/, "") || "/";
+  const allowed = navGroupsForRole(role).flatMap((g) => g.items);
+  return allowed.some((i) => path === i.href || path.startsWith(`${i.href}/`));
+}
+
+/** Where a role lands after login / when sent away from a page it can't open. */
+export function homeHrefForRole(role: AdminRole | undefined): string {
+  const first = navGroupsForRole(role)[0]?.items[0];
+  return first ? `${first.href}/` : "/admin/login/";
 }

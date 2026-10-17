@@ -2,9 +2,12 @@ import { Body, Controller, Get, Param, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { StoryBlocksService } from './story-blocks.service';
 import { UpsertStoryBlockDto } from './dto/upsert-story-block.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminRole } from '../../common/enums';
 
 @ApiBearerAuth()
 @ApiTags('story-blocks')
+@Roles(AdminRole.ADMIN)
 @Controller('admin/story/blocks')
 export class StoryBlocksController {
   constructor(private storyBlocksService: StoryBlocksService) {}

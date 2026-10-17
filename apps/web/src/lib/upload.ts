@@ -1,4 +1,5 @@
 import { apiClient } from "./api-client";
+import { MAX_UPLOAD_SIZE_BYTES } from "./constants";
 
 export interface MediaRecord {
   id: string;
@@ -15,6 +16,11 @@ interface PresignResponse {
 }
 
 export async function uploadFile(file: File): Promise<MediaRecord> {
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    const maxMb = (MAX_UPLOAD_SIZE_BYTES / (1024 * 1024)).toFixed(0);
+    throw new Error(`Kích thước file vượt quá giới hạn cho phép (tối đa ${maxMb}MB)`);
+  }
+
   const presign = await apiClient.post<PresignResponse>("/admin/media/presign", {
     fileName: file.name,
     mimeType: file.type || "application/octet-stream",
@@ -27,7 +33,7 @@ export async function uploadFile(file: File): Promise<MediaRecord> {
     body: file,
   });
   if (!putRes.ok) {
-    throw new Error("Tải file lên R2 thất bại");
+    throw new Error("Tải file lên thất bại");
   }
 
   return apiClient.post<MediaRecord>("/admin/media", {

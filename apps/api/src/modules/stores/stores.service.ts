@@ -32,6 +32,16 @@ export class StoresService {
     return { data, total, page, limit };
   }
 
+  /** Public lookup: an inactive (hidden) store must not be reachable by id. */
+  async findPublicOrFail(id: string): Promise<Store> {
+    const store = await this.storesRepo.findOne({
+      where: { id, isActive: true },
+      relations: { photos: true },
+    });
+    if (!store) throw new NotFoundException('Store not found');
+    return store;
+  }
+
   async findOneOrFail(id: string): Promise<Store> {
     const store = await this.storesRepo.findOne({
       where: { id },

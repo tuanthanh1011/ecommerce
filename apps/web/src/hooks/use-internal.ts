@@ -6,6 +6,7 @@ export interface InternalAnnouncement {
   title: string;
   content: string;
   pinnedUntil: string | null;
+  createdAt: string;
 }
 
 export interface AnnouncementInput {

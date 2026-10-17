@@ -17,6 +17,27 @@ services:
     # container on the compose network. Local dev's docker-compose.yml maps
     # 5433 for convenience; production doesn't need Postgres public.
 
+  garage:
+    image: dxflrs/garage:v2.4.1
+    restart: unless-stopped
+    environment:
+      GARAGE_DEFAULT_ACCESS_KEY: ${GARAGE_ACCESS_KEY_ID}
+      GARAGE_DEFAULT_SECRET_KEY: ${GARAGE_SECRET_ACCESS_KEY}
+      GARAGE_DEFAULT_BUCKET: ${GARAGE_BUCKET_NAME:-media}
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    volumes:
+      - ./infra/garage/garage.prod.toml:/etc/garage.toml:ro
+      - garage_meta:/var/lib/garage/meta
+      - garage_data:/var/lib/garage/data
+    ports:
+      - '3900:3900' # S3 API — presigned PUT uploads go straight here from the admin browser
+      - '3902:3902' # public website endpoint — serves uploaded files (GET only)
+    healthcheck:
+      test: ['CMD', '/garage', 'status']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   api:
     image: ghcr.io/tuanthanh1011/ecommerce-api:latest
     restart: unless-stopped
@@ -24,6 +45,8 @@ services:
       - .env
     depends_on:
       postgres:
+        condition: service_healthy
+      garage:
         condition: service_healthy
     ports:
       - '3001:3001'
@@ -38,3 +61,5 @@ services:
 
 volumes:
   pgdata:
+  garage_meta:
+  garage_data:

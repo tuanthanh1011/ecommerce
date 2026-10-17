@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
+import { AdminRole } from "@/lib/constants";
 
 export interface AdminAccount {
   id: string;
   email: string;
   fullName: string;
+  role: AdminRole;
   isActive: boolean;
 }
 
@@ -12,6 +14,7 @@ export interface CreateAdminInput {
   email: string;
   password: string;
   fullName: string;
+  role: AdminRole;
 }
 
 const KEY = "admins";
@@ -28,6 +31,15 @@ export function useCreateAdmin() {
   return useMutation({
     mutationFn: (input: CreateAdminInput) =>
       apiClient.post<AdminAccount>("/admin/admins", input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
+  });
+}
+
+export function useUpdateAdminRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, role }: { id: string; role: AdminRole }) =>
+      apiClient.patch<AdminAccount>(`/admin/admins/${id}`, { role }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
   });
 }

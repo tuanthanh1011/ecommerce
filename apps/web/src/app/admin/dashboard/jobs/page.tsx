@@ -47,11 +47,13 @@ export default function JobsPage() {
     },
     {
       accessorKey: "department",
+      meta: { hideBelow: "sm" },
       header: "Bộ phận",
       cell: ({ row }) => <TagBadge>{row.original.department}</TagBadge>,
     },
     {
       accessorKey: "postedAt",
+      meta: { hideBelow: "md" },
       header: "Ngày đăng",
       cell: ({ row }) => (
         <span className="text-[13px] text-muted-foreground tabular-nums">
@@ -61,6 +63,7 @@ export default function JobsPage() {
     },
     {
       accessorKey: "status",
+      meta: { hideBelow: "sm" },
       header: "Trạng thái",
       cell: ({ row }) =>
         row.original.status === JobStatus.OPEN ? (

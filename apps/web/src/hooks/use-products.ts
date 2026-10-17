@@ -23,6 +23,7 @@ export interface Product {
   description: string | null;
   price: string | null;
   status: ProductStatus;
+  isNew: boolean;
   photos: ProductPhoto[];
 }
 
@@ -34,6 +35,7 @@ export interface ProductInput {
   description?: string;
   price?: string;
   status?: ProductStatus;
+  isNew?: boolean;
 }
 
 const KEY = "products";

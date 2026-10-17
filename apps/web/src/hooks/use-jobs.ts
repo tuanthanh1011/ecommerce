@@ -65,11 +65,3 @@ export function useDeleteJob() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
   });
 }
-
-export function useCloseJob() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => apiClient.patch<Job>(`/admin/jobs/${id}/close`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
-  });
-}

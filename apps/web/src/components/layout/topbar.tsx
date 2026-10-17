@@ -15,11 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCurrentAdmin } from "@/hooks/use-auth";
+import { useCurrentAdmin, useIsReadOnly } from "@/hooks/use-auth";
 import { apiClient } from "@/lib/api-client";
 import { clearTokens, getRefreshToken } from "@/lib/auth";
 import { initials } from "@/lib/format";
-import { findNavItemForPath } from "./nav-items";
+import { findNavItemForPath, homeHrefForRole } from "./nav-items";
 import { useSidebar } from "./sidebar-context";
 
 function Breadcrumbs() {
@@ -28,9 +28,11 @@ function Breadcrumbs() {
   const item = findNavItemForPath(pathname);
   const isForm = pathname?.includes("/form");
   const isHome = item?.href === "/admin/dashboard";
+  const readOnly = useIsReadOnly();
+  const { data: admin } = useCurrentAdmin();
 
   const crumbs: { label: string; href?: string }[] = [
-    { label: "S.t CMS", href: "/admin/dashboard" },
+    { label: "S+ CMS", href: homeHrefForRole(admin?.role) },
   ];
   if (item && !isHome) {
     crumbs.push({ label: item.label, href: isForm ? item.href : undefined });
@@ -38,7 +40,9 @@ function Breadcrumbs() {
     crumbs.push({ label: "Tổng quan" });
   }
   if (isForm) {
-    crumbs.push({ label: searchParams.get("id") ? "Chỉnh sửa" : "Tạo mới" });
+    crumbs.push({
+      label: searchParams.get("id") ? (readOnly ? "Chi tiết" : "Chỉnh sửa") : "Tạo mới",
+    });
   }
 
   return (

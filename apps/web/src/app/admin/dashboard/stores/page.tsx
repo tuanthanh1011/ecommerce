@@ -48,6 +48,7 @@ export default function StoresPage() {
     },
     {
       accessorKey: "address",
+      meta: { hideBelow: "sm" },
       header: "Địa chỉ",
       cell: ({ row }) => (
         <div className="flex max-w-[340px] items-start gap-1.5 text-[13px] whitespace-normal">
@@ -58,6 +59,7 @@ export default function StoresPage() {
     },
     {
       accessorKey: "phone",
+      meta: { hideBelow: "md" },
       header: "Liên hệ",
       cell: ({ row }) => {
         const s = row.original;
@@ -88,6 +90,7 @@ export default function StoresPage() {
     },
     {
       accessorKey: "isActive",
+      meta: { hideBelow: "sm" },
       header: "Trạng thái",
       cell: ({ row }) => (
         <StatusBadge tone={row.original.isActive ? "success" : "neutral"}>
@@ -153,7 +156,7 @@ export default function StoresPage() {
           title: search ? "Không tìm thấy cửa hàng" : "Chưa có cửa hàng",
           description: search
             ? "Thử từ khoá khác."
-            : "Thêm cửa hàng đầu tiên để khách hàng tìm thấy S.t.",
+            : "Thêm cửa hàng đầu tiên để khách hàng tìm thấy S+.",
           action: !search && (
             <LinkButton href="/admin/dashboard/stores/form/" variant="outline">
               <Plus />

@@ -6,13 +6,15 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { CalendarClock, Loader2, Megaphone, Pin, PinOff, Save, Users } from "lucide-react";
+import { CalendarClock, CalendarDays, Loader2, Megaphone, Pin, PinOff, Save, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/common/page-header";
+import { Fact, ReadOnlyBlocked, ReadOnlyView } from "@/components/common/read-only-view";
+import { useIsReadOnly } from "@/hooks/use-auth";
 import { StatusBadge } from "@/components/common/status-badge";
 import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/common/form";
 import { ChoiceChips, ToggleRow } from "@/components/common/choice";
@@ -129,7 +131,7 @@ function AnnouncementFormInner() {
         module="/admin/dashboard/internal/announcements"
         backHref="/admin/dashboard/internal/announcements"
         title={isEdit ? "Sửa thông báo" : "Thông báo mới"}
-        description={isEdit ? announcement?.title : "Gửi thông tin tới toàn bộ nhân sự S.t"}
+        description={isEdit ? announcement?.title : "Gửi thông tin tới toàn bộ nhân sự S+"}
         meta={
           isEdit && currentlyPinned ? (
             <StatusBadge tone="warning">Đang ghim</StatusBadge>
@@ -268,10 +270,44 @@ function AnnouncementFormInner() {
   );
 }
 
+function AnnouncementDetail() {
+  const id = useSearchParams().get("id");
+  const { data, isLoading } = useAnnouncementsQuery();
+  const [now] = useState(() => Date.now());
+  const item = data?.find((a) => a.id === id);
+  if (isLoading) return <FormSkeleton />;
+  if (!item) return <ReadOnlyBlocked title="Không có thông báo này" />;
+  const pinned = !!item.pinnedUntil && new Date(item.pinnedUntil).getTime() > now;
+  return (
+    <ReadOnlyView
+      module="/admin/dashboard/internal/announcements"
+      backHref="/admin/dashboard/internal/announcements"
+      title={item.title}
+      kicker="Thông báo nội bộ"
+      badges={pinned ? <StatusBadge tone="warning">Đang được ghim</StatusBadge> : undefined}
+      facts={
+        <>
+          <Fact icon={CalendarDays} label="Đăng ngày">
+            {formatDate(item.createdAt)}
+          </Fact>
+          {pinned && (
+            <Fact icon={Pin} label="Ghim tới">
+              {formatDate(item.pinnedUntil)}
+            </Fact>
+          )}
+        </>
+      }
+    >
+      <p className="text-[15px] leading-loose whitespace-pre-line">{item.content}</p>
+    </ReadOnlyView>
+  );
+}
+
 export default function AnnouncementFormPage() {
+  const readOnly = useIsReadOnly();
   return (
     <Suspense fallback={<FormSkeleton />}>
-      <AnnouncementFormInner />
+      {readOnly ? <AnnouncementDetail /> : <AnnouncementFormInner />}
     </Suspense>
   );
 }

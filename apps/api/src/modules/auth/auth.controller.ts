@@ -1,10 +1,12 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentAdmin } from '../../common/decorators/current-admin.decorator';
 import { Admin } from '../admins/entities/admin.entity';
+import { toPublicAdmin } from '../admins/admin-public';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -17,6 +19,9 @@ export class AuthController {
     @InjectRepository(Admin) private adminsRepo: Repository<Admin>,
   ) {}
 
+  // Tighter than the global default — brute-force login attempts are the
+  // single highest-value target for rate limiting on this API.
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Public()
   @Post('login')
   login(@Body() dto: LoginDto) {
@@ -40,7 +45,6 @@ export class AuthController {
   async me(@CurrentAdmin() current: { sub: string }) {
     const admin = await this.adminsRepo.findOne({ where: { id: current.sub } });
     if (!admin) return null;
-    const { passwordHash: _passwordHash, ...rest } = admin;
-    return rest;
+    return toPublicAdmin(admin);
   }
 }

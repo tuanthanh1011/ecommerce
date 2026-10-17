@@ -7,8 +7,9 @@ import { Megaphone, Pin, Plus } from "lucide-react";
 import { LinkButton } from "@/components/ui/link-button";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
-import { EditAction } from "@/components/common/row-actions";
+import { EditAction, ViewAction } from "@/components/common/row-actions";
 import { DeleteButton } from "@/components/common/confirm-dialog";
+import { useIsReadOnly } from "@/hooks/use-auth";
 import {
   useAnnouncementsQuery,
   useDeleteAnnouncement,
@@ -29,21 +30,24 @@ export default function AnnouncementsPage() {
   const { data, isLoading } = useAnnouncementsQuery();
   const deleteAnnouncement = useDeleteAnnouncement();
   const [now] = useState(() => Date.now());
+  const readOnly = useIsReadOnly();
 
   return (
     <div>
       <PageHeader
         module="/admin/dashboard/internal/announcements"
         actions={
-          <LinkButton href="/admin/dashboard/internal/announcements/form/">
-            <Plus />
-            Thông báo mới
-          </LinkButton>
+          readOnly ? undefined : (
+            <LinkButton href="/admin/dashboard/internal/announcements/form/">
+              <Plus />
+              Thông báo mới
+            </LinkButton>
+          )
         }
       />
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-44 animate-pulse rounded-xl border bg-card" />
           ))}
@@ -55,15 +59,17 @@ export default function AnnouncementsPage() {
             title="Chưa có thông báo"
             description="Chia sẻ tin tức, thay đổi lịch làm hoặc lưu ý vận hành với cả đội."
             action={
+              !readOnly && (
               <LinkButton href="/admin/dashboard/internal/announcements/form/" variant="outline">
                 <Plus />
                 Thông báo mới
               </LinkButton>
+              )
             }
           />
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {data.map((item, i) => {
             const pinned =
               item.pinnedUntil && new Date(item.pinnedUntil).getTime() > now;
@@ -103,6 +109,10 @@ export default function AnnouncementsPage() {
                   </p>
                 </div>
                 <div className="relative z-10 flex items-center justify-end gap-0.5 border-t bg-muted/30 px-3 py-2">
+                  {readOnly ? (
+                    <ViewAction href={`/admin/dashboard/internal/announcements/form/?id=${item.id}`} />
+                  ) : (
+                    <>
                   <EditAction href={`/admin/dashboard/internal/announcements/form/?id=${item.id}`} />
                   <DeleteButton
                     itemLabel={item.title}
@@ -115,6 +125,8 @@ export default function AnnouncementsPage() {
                       }
                     }}
                   />
+                    </>
+                  )}
                 </div>
               </article>
             );

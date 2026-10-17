@@ -30,6 +30,20 @@ import {
 import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "@/lib/utils";
 
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData, TValue> {
+    /** Hide this column below the given breakpoint (secondary info on phones). */
+    hideBelow?: "sm" | "md" | "lg";
+  }
+}
+
+const HIDE_BELOW = {
+  sm: "hidden sm:table-cell",
+  md: "hidden md:table-cell",
+  lg: "hidden lg:table-cell",
+} as const;
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -136,7 +150,11 @@ export function DataTable<TData, TValue>({
                     aria-sort={
                       sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined
                     }
-                    className="h-10 px-4 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase"
+                    className={cn(
+                      "h-10 px-4 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase",
+                      header.column.columnDef.meta?.hideBelow &&
+                        HIDE_BELOW[header.column.columnDef.meta.hideBelow],
+                    )}
                   >
                     {canSort ? (
                       <button
@@ -169,8 +187,11 @@ export function DataTable<TData, TValue>({
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i} className="hover:bg-transparent">
-                {columns.map((_, j) => (
-                  <TableCell key={j} className="px-4 py-4">
+                {columns.map((col, j) => (
+                  <TableCell
+                    key={j}
+                    className={cn("px-4 py-4", col.meta?.hideBelow && HIDE_BELOW[col.meta.hideBelow])}
+                  >
                     <div className="flex items-center gap-3">
                       {j === 0 && <div className="size-10 shrink-0 animate-pulse rounded-lg bg-muted" />}
                       <div
@@ -205,7 +226,14 @@ export function DataTable<TData, TValue>({
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-3 text-foreground/85">
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        "px-4 py-3 text-foreground/85",
+                        cell.column.columnDef.meta?.hideBelow &&
+                          HIDE_BELOW[cell.column.columnDef.meta.hideBelow],
+                      )}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

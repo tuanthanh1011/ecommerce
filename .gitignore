@@ -32,3 +32,7 @@ coverage/
 
 # local Claude Code tooling (skills/plugins cache, not project source)
 .claude/
+
+# Garage holds real rpc/admin secrets — keep the .example templates only
+infra/garage/garage.toml
+infra/garage/garage.prod.toml

@@ -12,9 +12,14 @@ import { AdminsService } from './admins.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminRole } from '../../common/enums';
 
+// Account management is Admin-only — Employee accounts are managed by Admins,
+// never self-service, and Employees have no business seeing the admin list.
 @ApiBearerAuth()
 @ApiTags('admins')
+@Roles(AdminRole.ADMIN)
 @Controller('admin/admins')
 export class AdminsController {
   constructor(private adminsService: AdminsService) {}

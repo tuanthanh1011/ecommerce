@@ -32,8 +32,10 @@ import {
   useCreateAdmin,
   useDeactivateAdmin,
   useUpdateAdminPassword,
+  useUpdateAdminRole,
   type AdminAccount,
 } from "@/hooks/use-admins";
+import { AdminRole, ADMIN_ROLE_LABELS } from "@/lib/constants";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +50,7 @@ const createSchema = z
   .object({
     fullName: z.string().min(1, "Bắt buộc"),
     email: z.string().email("Email không hợp lệ"),
+    role: z.nativeEnum(AdminRole),
     ...passwordFields,
   })
   .refine(matches, mismatch);
@@ -59,21 +62,31 @@ type PasswordValues = z.infer<typeof passwordSchema>;
 const FORM_ID = "admin-form";
 const BACK = "/admin/dashboard/admins";
 
-const PERMISSIONS = [
-  "Quản lý toàn bộ nội dung công khai",
-  "Quản lý tài liệu & thông báo nội bộ",
-  "Tạo và khoá tài khoản admin khác",
-];
+const PERMISSIONS: Record<AdminRole, string[]> = {
+  [AdminRole.ADMIN]: [
+    "Quản lý toàn bộ nội dung công khai (sản phẩm, cửa hàng, tin tức, tuyển dụng...)",
+    "Quản lý tài liệu, thông báo & lịch trình nội bộ",
+    "Tạo và khoá tài khoản khác, kể cả admin khác",
+  ],
+  [AdminRole.EMPLOYEE]: [
+    "Quản lý tài liệu & công thức quy trình, văn hoá, quy chuẩn",
+    "Đăng & chỉnh sửa tin tức nội bộ",
+    "Quản lý thông báo và lịch trình nội bộ",
+  ],
+};
 
 function AccountPreview({
   name,
   email,
+  role,
   active = true,
 }: {
   name?: string;
   email?: string;
+  role: AdminRole;
   active?: boolean;
 }) {
+  const isAdmin = role === AdminRole.ADMIN;
   return (
     <PreviewFrame label="Tài khoản sẽ hiển thị">
       <div className="h-14 bg-linear-to-r from-stone-800 via-stone-700 to-amber-700" />
@@ -93,9 +106,16 @@ function AccountPreview({
           <PreviewText value={email} placeholder="email@st.vn" />
         </p>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-200">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium",
+              isAdmin
+                ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200"
+                : "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-200",
+            )}
+          >
             <ShieldCheck className="size-3" />
-            Quản trị viên
+            {ADMIN_ROLE_LABELS[role]}
           </span>
           <StatusBadge tone={active ? "success" : "danger"} className="h-5 text-[11px]">
             {active ? "Hoạt động" : "Đã khoá"}
@@ -106,11 +126,11 @@ function AccountPreview({
   );
 }
 
-function PermissionsCard() {
+function PermissionsCard({ role }: { role: AdminRole }) {
   return (
     <FormSection icon={ShieldCheck} tone="amber" title="Quyền truy cập">
       <ul className="space-y-2.5">
-        {PERMISSIONS.map((p) => (
+        {PERMISSIONS[role].map((p) => (
           <li key={p} className="flex items-start gap-2 text-[13px]">
             <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
               <Check className="size-3" strokeWidth={3} />
@@ -137,6 +157,48 @@ function SaveActions({ submitting, label }: { submitting: boolean; label: string
   );
 }
 
+function RoleSelect({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: AdminRole;
+  onChange: (role: AdminRole) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {([AdminRole.EMPLOYEE, AdminRole.ADMIN] as const).map((role) => {
+        const active = value === role;
+        return (
+          <button
+            key={role}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(role)}
+            className={cn(
+              "rounded-xl border px-4 py-3 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+              active
+                ? "border-amber-500 bg-amber-50 ring-1 ring-amber-500 dark:bg-amber-500/10"
+                : "border-input hover:bg-muted/50",
+            )}
+          >
+            <span className="flex items-center gap-1.5 font-medium">
+              <ShieldCheck className={cn("size-4", active ? "text-amber-600" : "text-muted-foreground")} />
+              {ADMIN_ROLE_LABELS[role]}
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              {role === AdminRole.ADMIN
+                ? "Toàn quyền trên hệ thống"
+                : "Chỉ nội bộ: tài liệu, thông báo, lịch trình"}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function CreateAdminForm() {
   const router = useRouter();
   const createAdmin = useCreateAdmin();
@@ -144,13 +206,25 @@ function CreateAdminForm() {
     register,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
-    defaultValues: { fullName: "", email: "", password: "", confirm: "" },
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirm: "",
+      role: AdminRole.EMPLOYEE,
+    },
   });
-  const [fullName, email, password] = watch(["fullName", "email", "password"]);
+  const [fullName, email, password, role] = watch([
+    "fullName",
+    "email",
+    "password",
+    "role",
+  ]);
 
   const onSubmit = async (values: CreateValues) => {
     try {
@@ -158,8 +232,9 @@ function CreateAdminForm() {
         fullName: values.fullName,
         email: values.email,
         password: values.password,
+        role: values.role,
       });
-      toast.success("Đã tạo tài khoản admin");
+      toast.success("Đã tạo tài khoản");
       router.replace(`${BACK}/`);
     } catch {
       toast.error("Tạo thất bại — email có thể đã tồn tại");
@@ -180,7 +255,7 @@ function CreateAdminForm() {
           main={
             <>
               <FormSection icon={UserRound} tone="slate" title="Thông tin tài khoản" description="Email dùng để đăng nhập, không thể thay đổi sau khi tạo.">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Họ tên" htmlFor="fullName" required error={errors.fullName?.message}>
                     <Input id="fullName" placeholder="Nguyễn Văn A" {...register("fullName")} />
                   </Field>
@@ -192,8 +267,11 @@ function CreateAdminForm() {
                   </Field>
                 </div>
               </FormSection>
+              <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Quyết định những mục nào tài khoản này thấy được trong CMS.">
+                <RoleSelect value={role} onChange={(r) => setValue("role", r, { shouldDirty: true })} />
+              </FormSection>
               <FormSection icon={KeyRound} tone="amber" title="Mật khẩu đăng nhập" description="Gửi mật khẩu cho người dùng qua kênh riêng tư.">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Mật khẩu" htmlFor="password" required error={errors.password?.message}>
                     <PasswordInput id="password" autoComplete="new-password" {...register("password")} />
                   </Field>
@@ -207,8 +285,8 @@ function CreateAdminForm() {
           }
           side={
             <>
-              <AccountPreview name={fullName} email={email} />
-              <PermissionsCard />
+              <AccountPreview name={fullName} email={email} role={role} />
+              <PermissionsCard role={role} />
             </>
           }
         />
@@ -227,8 +305,22 @@ function CreateAdminForm() {
 function EditAdminForm({ admin }: { admin: AdminAccount }) {
   const router = useRouter();
   const updatePassword = useUpdateAdminPassword(admin.id);
+  const updateRole = useUpdateAdminRole();
   const deactivate = useDeactivateAdmin();
   const [confirmLock, setConfirmLock] = useState(false);
+  const [role, setRole] = useState(admin.role);
+
+  const handleRoleChange = async (nextRole: typeof role) => {
+    const previous = role;
+    setRole(nextRole);
+    try {
+      await updateRole.mutateAsync({ id: admin.id, role: nextRole });
+      toast.success("Đã cập nhật vai trò");
+    } catch {
+      setRole(previous);
+      toast.error("Cập nhật vai trò thất bại");
+    }
+  };
   const {
     register,
     handleSubmit,
@@ -270,7 +362,7 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
           main={
             <>
               <FormSection icon={UserRound} tone="slate" title="Thông tin tài khoản" description="Họ tên và email không thể chỉnh sửa tại đây.">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Họ tên">
                     <Input value={admin.fullName} disabled readOnly />
                   </Field>
@@ -279,8 +371,11 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
                   </Field>
                 </div>
               </FormSection>
+              <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Áp dụng ngay lập tức, không cần lưu.">
+                <RoleSelect value={role} onChange={handleRoleChange} disabled={updateRole.isPending} />
+              </FormSection>
               <FormSection icon={KeyRound} tone="amber" title="Đổi mật khẩu" description="Mật khẩu mới có hiệu lực ngay ở lần đăng nhập tiếp theo.">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Mật khẩu mới" htmlFor="password" required error={errors.password?.message}>
                     <PasswordInput id="password" autoComplete="new-password" {...register("password")} />
                   </Field>
@@ -294,7 +389,8 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
           }
           side={
             <>
-              <AccountPreview name={admin.fullName} email={admin.email} active={admin.isActive} />
+              <AccountPreview name={admin.fullName} email={admin.email} role={role} active={admin.isActive} />
+              <PermissionsCard role={role} />
               {admin.isActive && (
                 <section className="rounded-2xl border border-red-200 bg-red-50/50 p-5 dark:border-red-500/20 dark:bg-red-500/5">
                   <div className="flex items-start gap-3">

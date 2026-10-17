@@ -34,11 +34,11 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/common/form";
 import { ChoiceCards, ChoiceChips, ToggleRow } from "@/components/common/choice";
 import { FormActionBar } from "@/components/common/form-action-bar";
-import { PreviewCard } from "@/components/common/preview-card";
+import { SitePreview } from "@/components/site/site-preview";
+import { ProductChips, ProductItem } from "@/components/site/cards";
 import { PhotoGallery } from "@/components/upload/photo-gallery";
 import { cleanInput } from "@/lib/clean";
 import { formatPrice } from "@/lib/format";
-import { toneChip } from "@/lib/tones";
 import {
   useAttachProductPhoto,
   useCreateProduct,
@@ -53,7 +53,6 @@ import {
   ProductStatus,
   DRINK_SUB_TYPE_LABELS,
   MERCHANDISE_SUB_TYPE_LABELS,
-  PRODUCT_CATEGORY_LABELS,
 } from "@/lib/constants";
 
 const productSchema = z.object({
@@ -64,6 +63,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   price: z.string().optional(),
   status: z.nativeEnum(ProductStatus),
+  isNew: z.boolean(),
 });
 
 type ProductValues = z.infer<typeof productSchema>;
@@ -110,6 +110,7 @@ function ProductFormInner() {
       price: "",
       category: ProductCategory.DRINK,
       status: ProductStatus.ACTIVE,
+      isNew: false,
     },
     values: product
       ? {
@@ -120,16 +121,27 @@ function ProductFormInner() {
           description: product.description ?? "",
           price: product.price ?? "",
           status: product.status,
+          isNew: product.isNew,
         }
       : undefined,
   });
 
   const category = watch("category");
   const status = watch("status");
-  const [previewName, previewDescription, previewPrice] = watch(["name", "description", "price"]);
-  const coverPhoto = product
-    ? [...product.photos].sort((a, b) => a.sortOrder - b.sortOrder)[0]?.media.url
-    : undefined;
+  const live = watch();
+  // The unsaved form values, shaped like a public product so the preview can
+  // render the real website components.
+  const previewProduct = {
+    name: live.name || "Tên sản phẩm",
+    description: live.description || null,
+    price: live.price || null,
+    category: live.category,
+    drinkSubType: live.category === ProductCategory.DRINK ? live.drinkSubType ?? null : null,
+    merchandiseSubType:
+      live.category === ProductCategory.MERCHANDISE ? live.merchandiseSubType ?? null : null,
+    isNew: live.isNew,
+    photos: product?.photos ?? [],
+  };
 
   const onSubmit = async (rawValues: ProductValues) => {
     const values = cleanInput(rawValues) as ProductValues;
@@ -156,7 +168,7 @@ function ProductFormInner() {
         module="/admin/dashboard/products"
         backHref="/admin/dashboard/products"
         title={isEdit ? product?.name ?? "Sửa sản phẩm" : "Thêm sản phẩm"}
-        description={isEdit ? "Cập nhật thông tin hiển thị trên thực đơn" : "Tạo món mới cho thực đơn hoặc vật phẩm S.t"}
+        description={isEdit ? "Cập nhật thông tin hiển thị trên thực đơn" : "Tạo món mới cho thực đơn hoặc vật phẩm S+"}
         meta={
           isEdit && (
             <StatusBadge tone={status === ProductStatus.ACTIVE ? "success" : "neutral"}>
@@ -208,7 +220,7 @@ function ProductFormInner() {
                           },
                           {
                             value: ProductCategory.MERCHANDISE,
-                            label: "Vật phẩm S.t",
+                            label: "Vật phẩm S+",
                             description: "Sổ, bút, bình giữ nhiệt, túi…",
                             icon: Package,
                           },
@@ -315,26 +327,31 @@ function ProductFormInner() {
                     />
                   )}
                 />
+                <Controller
+                  control={control}
+                  name="isNew"
+                  render={({ field }) => (
+                    <ToggleRow
+                      title="Sản phẩm mới"
+                      description="Hiển thị ở mục “Sản Phẩm Mới” trên trang chủ (tối đa 3 sản phẩm gần nhất được gắn)."
+                      control={<Switch checked={field.value} onCheckedChange={field.onChange} />}
+                    />
+                  )}
+                />
               </FormSection>
 
-              <PreviewCard
-                image={coverPhoto}
-                fallbackIcon={category === ProductCategory.DRINK ? Coffee : Package}
-                imageClassName="aspect-video"
-                chip={
-                  <span className={toneChip(category === ProductCategory.DRINK ? "amber" : "violet")}>
-                    {PRODUCT_CATEGORY_LABELS[category]}
-                  </span>
-                }
-                title={previewName}
-                titlePlaceholder="Tên sản phẩm"
-                body={previewDescription}
-                footer={
-                  <p className="pt-1 text-sm font-semibold text-amber-700 tabular-nums dark:text-amber-300">
-                    {previewPrice ? formatPrice(previewPrice) : "Liên hệ"}
-                  </p>
-                }
-              />
+              {/* Cùng một thẻ + nhãn với trang Sản phẩm trên website
+                  (components/site/cards.tsx) — không phải bản vẽ lại. */}
+              <SitePreview>
+                <ProductItem product={previewProduct} unoptimized />
+                <ProductChips product={previewProduct} />
+                <p
+                  className="text-xl font-semibold tabular-nums"
+                  style={{ color: "#960000", fontFamily: "var(--font-display)" }}
+                >
+                  {previewProduct.price ? formatPrice(previewProduct.price) : "Liên hệ"}
+                </p>
+              </SitePreview>
             </>
           }
         />

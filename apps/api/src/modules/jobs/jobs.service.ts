@@ -27,6 +27,15 @@ export class JobsService {
     return { data, total, page, limit };
   }
 
+  /** Public lookup: a CLOSED job must not be reachable by id. */
+  async findPublicOrFail(id: string): Promise<Job> {
+    const job = await this.jobsRepo.findOne({
+      where: { id, status: JobStatus.OPEN },
+    });
+    if (!job) throw new NotFoundException('Job not found');
+    return job;
+  }
+
   async findOneOrFail(id: string): Promise<Job> {
     const job = await this.jobsRepo.findOne({ where: { id } });
     if (!job) throw new NotFoundException('Job not found');

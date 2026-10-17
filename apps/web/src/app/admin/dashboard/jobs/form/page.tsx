@@ -17,9 +17,10 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/common/form";
 import { ToggleRow } from "@/components/common/choice";
 import { FormActionBar } from "@/components/common/form-action-bar";
-import { PreviewFrame, PreviewText } from "@/components/common/preview-card";
 import { useCreateJob, useJobQuery, useJobsQuery, useUpdateJob } from "@/hooks/use-jobs";
 import { JobStatus } from "@/lib/constants";
+import { JobCard } from "@/components/site/cards";
+import { SitePreview } from "@/components/site/site-preview";
 
 const jobSchema = z.object({
   title: z.string().min(1, "Bắt buộc"),
@@ -131,7 +132,7 @@ function JobFormInner() {
           main={
             <>
               <FormSection icon={Briefcase} tone="violet" title="Vị trí" description="Tên vị trí và bộ phận tuyển.">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Tên vị trí" htmlFor="title" required error={errors.title?.message}>
                     <Input id="title" placeholder="VD: Barista ca sáng" {...register("title")} />
                   </Field>
@@ -201,39 +202,20 @@ function JobFormInner() {
                   )}
                 />
               </FormSection>
-              <PreviewFrame label="Xem trước trang tuyển dụng">
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-                      <Briefcase className="size-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="line-clamp-2 font-semibold tracking-tight">
-                        <PreviewText value={title} placeholder="Tên vị trí" />
-                      </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                        <Building2 className="size-3" />
-                        <PreviewText value={department} placeholder="Bộ phận" />
-                      </p>
-                    </div>
-                  </div>
-                  <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
-                    <PreviewText value={description} placeholder="Mô tả công việc sẽ hiển thị ở đây…" />
+              <SitePreview>
+                <JobCard
+                  job={{
+                    title: title || "Tên vị trí",
+                    department: department || "Bộ phận",
+                    description: description || "Mô tả công việc sẽ hiển thị ở đây…",
+                  }}
+                />
+                {status !== JobStatus.OPEN && (
+                  <p className="text-center text-xs text-stone-500">
+                    Tin đang đóng — sẽ không hiển thị trên website.
                   </p>
-                  <div className="mt-3 flex items-center justify-between border-t pt-3">
-                    {status === JobStatus.OPEN ? (
-                      <StatusBadge tone="success" pulse>
-                        Đang tuyển
-                      </StatusBadge>
-                    ) : (
-                      <StatusBadge tone="neutral">Đã đóng</StatusBadge>
-                    )}
-                    <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
-                      Ứng tuyển →
-                    </span>
-                  </div>
-                </div>
-              </PreviewFrame>
+                )}
+              </SitePreview>
               <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-4 dark:border-violet-500/20 dark:bg-violet-500/10">
                 <p className="flex items-center gap-2 text-sm font-semibold text-violet-900 dark:text-violet-200">
                   <Lightbulb className="size-4" />
@@ -242,7 +224,7 @@ function JobFormInner() {
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] text-violet-900/80 dark:text-violet-200/80">
                   <li>Nêu rõ ca làm, địa điểm và quyền lợi.</li>
                   <li>Giữ yêu cầu ngắn gọn, ưu tiên điều bắt buộc.</li>
-                  <li>Chia sẻ một chút về văn hoá S.t.</li>
+                  <li>Chia sẻ một chút về văn hoá S+.</li>
                 </ul>
               </div>
             </>

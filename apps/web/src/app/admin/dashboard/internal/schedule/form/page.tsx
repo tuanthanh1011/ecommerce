@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,6 +37,10 @@ const schema = z
 
 type Values = z.infer<typeof schema>;
 
+import { Fact, ReadOnlyBlocked, ReadOnlyView } from "@/components/common/read-only-view";
+import { StatusBadge } from "@/components/common/status-badge";
+import { useIsReadOnly } from "@/hooks/use-auth";
+
 const FORM_ID = "schedule-form";
 
 function toLocalInput(value: Date | string | null | undefined): string {
@@ -64,6 +68,9 @@ function ScheduleFormInner() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? undefined;
   const isEdit = !!id;
+  // Clicking a day in the calendar opens a new event on that date, 09:00.
+  const presetDate = searchParams.get("date");
+  const presetStart = presetDate && /^\d{4}-\d{2}-\d{2}$/.test(presetDate) ? `${presetDate}T09:00` : "";
 
   const { data: list, isLoading } = useScheduleQuery();
   const entry = id ? list?.find((e) => e.id === id) : undefined;
@@ -79,7 +86,7 @@ function ScheduleFormInner() {
     formState: { errors, isSubmitting, isDirty },
   } = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { title: "", description: "", startAt: "", endAt: "", location: "" },
+    defaultValues: { title: "", description: "", startAt: presetStart, endAt: "", location: "" },
     values: entry
       ? {
           title: entry.title,
@@ -163,7 +170,7 @@ function ScheduleFormInner() {
               </FormSection>
 
               <FormSection icon={Clock} tone="sky" title="Thời gian & địa điểm">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Bắt đầu" htmlFor="startAt" required error={errors.startAt?.message}>
                     <Input id="startAt" type="datetime-local" {...register("startAt")} />
                   </Field>
@@ -244,10 +251,76 @@ function ScheduleFormInner() {
   );
 }
 
+function ScheduleDetail() {
+  const id = useSearchParams().get("id");
+  const { data, isLoading } = useScheduleQuery();
+  const [now] = useState(() => Date.now());
+  const entry = data?.find((e) => e.id === id);
+  if (isLoading) return <FormSkeleton />;
+  if (!entry) return <ReadOnlyBlocked title="Không có lịch này" />;
+
+  const start = new Date(entry.startAt);
+  const end = entry.endAt ? new Date(entry.endAt) : null;
+  const phase =
+    now < start.getTime() ? "upcoming" : now <= (end ?? start).getTime() ? "live" : "past";
+  const clock = (d: Date) =>
+    d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <ReadOnlyView
+      module="/admin/dashboard/internal/schedule"
+      backHref="/admin/dashboard/internal/schedule"
+      title={entry.title}
+      kicker="Lịch trình nội bộ"
+      badges={
+        phase === "live" ? (
+          <StatusBadge tone="danger" pulse>
+            Đang diễn ra
+          </StatusBadge>
+        ) : phase === "upcoming" ? (
+          <StatusBadge tone="info">Sắp diễn ra</StatusBadge>
+        ) : (
+          <StatusBadge tone="neutral">Đã kết thúc</StatusBadge>
+        )
+      }
+      facts={
+        <>
+          <Fact icon={CalendarDays} label="Ngày">
+            <span className="capitalize">
+              {start.toLocaleDateString("vi-VN", {
+                weekday: "long",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}
+            </span>
+          </Fact>
+          <Fact icon={Clock} label="Giờ">
+            {clock(start)}
+            {end && ` – ${clock(end)}`}
+          </Fact>
+          {entry.location && (
+            <Fact icon={MapPin} label="Địa điểm">
+              {entry.location}
+            </Fact>
+          )}
+        </>
+      }
+    >
+      {entry.description ? (
+        <p className="text-[15px] leading-loose whitespace-pre-line">{entry.description}</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">Sự kiện này không có mô tả thêm.</p>
+      )}
+    </ReadOnlyView>
+  );
+}
+
 export default function ScheduleFormPage() {
+  const readOnly = useIsReadOnly();
   return (
     <Suspense fallback={<FormSkeleton />}>
-      <ScheduleFormInner />
+      {readOnly ? <ScheduleDetail /> : <ScheduleFormInner />}
     </Suspense>
   );
 }

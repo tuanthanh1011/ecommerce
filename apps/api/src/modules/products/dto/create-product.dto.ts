@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumberString, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import {
   DrinkSubType,
   MerchandiseSubType,
@@ -40,4 +46,11 @@ export class CreateProductDto {
   @IsOptional()
   @IsEnum(ProductStatus)
   status?: ProductStatus;
+
+  @ApiPropertyOptional({
+    description: 'Hiển thị ở mục "Sản phẩm mới" trên trang chủ',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isNew?: boolean;
 }

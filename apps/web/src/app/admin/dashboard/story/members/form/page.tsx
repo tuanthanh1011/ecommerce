@@ -15,7 +15,6 @@ import { PageHeader } from "@/components/common/page-header";
 import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/common/form";
 import { ChoiceCards } from "@/components/common/choice";
 import { FormActionBar } from "@/components/common/form-action-bar";
-import { PreviewFrame, PreviewText } from "@/components/common/preview-card";
 import { ImageUploader } from "@/components/upload/image-uploader";
 import {
   useCreateTeamMember,
@@ -23,7 +22,8 @@ import {
   useUpdateTeamMember,
 } from "@/hooks/use-story";
 import { TeamMemberGroup, TEAM_MEMBER_GROUP_LABELS } from "@/lib/constants";
-import { initials } from "@/lib/format";
+import { TeamMemberCard } from "@/components/site/cards";
+import { SitePreview } from "@/components/site/site-preview";
 
 const schema = z.object({
   name: z.string().min(1, "Bắt buộc"),
@@ -114,8 +114,8 @@ function MemberFormInner() {
         title={isEdit ? member?.name ?? "Sửa thành viên" : "Thêm thành viên"}
         description={
           isEdit
-            ? `${TEAM_MEMBER_GROUP_LABELS[group]} · Trang Câu chuyện S.t`
-            : "Giới thiệu một gương mặt mới trên trang Câu chuyện S.t"
+            ? `${TEAM_MEMBER_GROUP_LABELS[group]} · Trang Câu chuyện S+`
+            : "Giới thiệu một gương mặt mới trên trang Câu chuyện S+"
         }
         actions={
           <>
@@ -135,7 +135,7 @@ function MemberFormInner() {
           main={
             <>
               <FormSection icon={UserRound} tone="orange" title="Thông tin thành viên" description="Tên và vai trò hiển thị dưới ảnh đại diện.">
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Họ tên" htmlFor="name" required error={errors.name?.message}>
                     <Input id="name" placeholder="VD: Nguyễn Minh Anh" {...register("name")} />
                   </Field>
@@ -164,7 +164,7 @@ function MemberFormInner() {
                         {
                           value: TeamMemberGroup.CORE_TEAM,
                           label: TEAM_MEMBER_GROUP_LABELS[TeamMemberGroup.CORE_TEAM],
-                          description: "Những người vận hành S.t mỗi ngày",
+                          description: "Những người vận hành S+ mỗi ngày",
                           icon: Crown,
                         },
                         {
@@ -199,30 +199,16 @@ function MemberFormInner() {
                 </div>
               </FormSection>
 
-              <PreviewFrame>
-                <div className="relative flex flex-col items-center px-5 pt-7 pb-5 text-center">
-                  <div className="absolute inset-x-0 top-0 h-16 bg-linear-to-br from-amber-100 via-orange-50 to-rose-100 dark:from-amber-500/15 dark:via-orange-500/5 dark:to-rose-500/10" />
-                  <div className="relative size-20 overflow-hidden rounded-full bg-muted shadow-md ring-4 ring-card">
-                    {photo?.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo.url} alt="" className="size-full object-cover" />
-                    ) : (
-                      <span className="flex size-full items-center justify-center bg-linear-to-br from-amber-400 to-orange-600 text-lg font-semibold text-white">
-                        {name ? initials(name) : "?"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="relative mt-3 font-semibold">
-                    <PreviewText value={name} placeholder="Họ tên" />
-                  </p>
-                  <p className="relative text-[13px] text-amber-700 dark:text-amber-300">
-                    <PreviewText value={role} placeholder="Vai trò" />
-                  </p>
-                  {bio && (
-                    <p className="relative mt-2 line-clamp-3 text-xs text-muted-foreground">{bio}</p>
-                  )}
-                </div>
-              </PreviewFrame>
+              <SitePreview>
+                <TeamMemberCard
+                  member={{
+                    name: name || "Họ tên",
+                    role: role || "Vai trò",
+                    bio: bio || null,
+                    photo: photo?.url ? { url: photo.url } : null,
+                  }}
+                />
+              </SitePreview>
             </>
           }
         />

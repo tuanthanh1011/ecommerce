@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { DeleteButton } from "@/components/common/confirm-dialog";
 import { useUnsavedChangesWarning } from "@/components/common/form-action-bar";
 import { TiptapEditor } from "@/components/rich-text/tiptap-editor";
 import {
+  type StoryBlock,
   useStoryBlocksQuery,
   useTeamMembersQuery,
   useUpsertStoryBlock,
@@ -24,6 +25,8 @@ import {
 import { TeamMemberGroup } from "@/lib/constants";
 import type { Tone } from "@/lib/tones";
 import { initials } from "@/lib/format";
+import { StoryBlockSection } from "@/components/site/cards";
+import { SitePreview } from "@/components/site/site-preview";
 
 const BLOCK_DEFS: {
   slug: string;
@@ -37,7 +40,7 @@ const BLOCK_DEFS: {
     defaultTitle: "Hướng đi",
     icon: Compass,
     tone: "orange",
-    hint: "Tầm nhìn và định hướng phát triển của S.t",
+    hint: "Tầm nhìn và định hướng phát triển của S+",
   },
   {
     slug: "cot-loi-van-hoa",
@@ -48,23 +51,20 @@ const BLOCK_DEFS: {
   },
 ];
 
-function StoryBlockEditor({ slug, defaultTitle, icon, tone, hint }: (typeof BLOCK_DEFS)[number]) {
-  const { data: blocks } = useStoryBlocksQuery();
-  const block = blocks?.find((b) => b.slug === slug);
+/** Mounted only after the blocks have loaded, so its initial state is the server's. */
+function StoryBlockEditor({
+  slug,
+  defaultTitle,
+  icon,
+  tone,
+  hint,
+  block,
+  index,
+}: (typeof BLOCK_DEFS)[number] & { block?: StoryBlock; index: number }) {
   const [title, setTitle] = useState(block?.title ?? defaultTitle);
   const [content, setContent] = useState(block?.content ?? "");
-  const [saved, setSaved] = useState({ title: block?.title ?? defaultTitle, content: block?.content ?? "" });
-  const [loadedFromServer, setLoadedFromServer] = useState(false);
+  const [saved, setSaved] = useState({ title, content });
   const upsert = useUpsertStoryBlock(slug);
-
-  useEffect(() => {
-    if (block && !loadedFromServer) {
-      setTitle(block.title);
-      setContent(block.content);
-      setSaved({ title: block.title, content: block.content });
-      setLoadedFromServer(true);
-    }
-  }, [block, loadedFromServer]);
 
   const dirty = title !== saved.title || content !== saved.content;
   useUnsavedChangesWarning(dirty);
@@ -106,6 +106,11 @@ function StoryBlockEditor({ slug, defaultTitle, icon, tone, hint }: (typeof BLOC
       <Field label="Nội dung">
         <TiptapEditor value={content} onChange={setContent} />
       </Field>
+      <SitePreview label="Xem trước trên trang Câu chuyện">
+        <div className="px-2 py-4">
+          <StoryBlockSection index={index} title={title || defaultTitle} content={content} />
+        </div>
+      </SitePreview>
     </FormSection>
   );
 }
@@ -131,7 +136,7 @@ function TeamMemberList({ group }: { group: TeamMemberGroup }) {
         <EmptyState
           icon={Users}
           title="Chưa có thành viên"
-          description="Giới thiệu những gương mặt làm nên S.t."
+          description="Giới thiệu những gương mặt làm nên S+."
           action={
             <Link
               href={createHref}
@@ -215,6 +220,7 @@ function StoryInner() {
   const searchParams = useSearchParams();
   const param = searchParams.get("tab") as TabValue | null;
   const tab: TabValue = param && TABS.includes(param) ? param : "content";
+  const { data: blocks, isLoading: blocksLoading } = useStoryBlocksQuery();
 
   return (
     <div>
@@ -238,9 +244,18 @@ function StoryInner() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="content" className="space-y-6">
-          {BLOCK_DEFS.map((b) => (
-            <StoryBlockEditor key={b.slug} {...b} />
-          ))}
+          {blocksLoading ? (
+            <div className="h-64 animate-pulse rounded-2xl border bg-card" />
+          ) : (
+            BLOCK_DEFS.map((b, i) => (
+              <StoryBlockEditor
+                key={b.slug}
+                {...b}
+                index={i}
+                block={blocks?.find((x) => x.slug === b.slug)}
+              />
+            ))
+          )}
         </TabsContent>
         <TabsContent value="core-team">
           <TeamMemberList group={TeamMemberGroup.CORE_TEAM} />

@@ -15,10 +15,14 @@ const STORAGE_KEY = "st-cms:sidebar-collapsed";
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   // Mounted only after the client-side auth check, so reading storage here is safe.
   const [collapsed, setCollapsed] = useState(() => {
+    // An explicit choice wins; otherwise start as a slim rail on tablets so
+    // the content keeps its room.
+    const tablet = window.matchMedia("(max-width: 1023px)").matches;
     try {
-      return localStorage.getItem(STORAGE_KEY) === "1";
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored === null ? tablet : stored === "1";
     } catch {
-      return false;
+      return tablet;
     }
   });
   const [mobileOpen, setMobileOpen] = useState(false);

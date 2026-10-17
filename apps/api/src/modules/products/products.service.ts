@@ -24,7 +24,12 @@ export class ProductsService {
       where: {
         ...(query.search ? { name: ILike(`%${query.search}%`) } : {}),
         ...(query.category ? { category: query.category } : {}),
+        ...(query.drinkSubType ? { drinkSubType: query.drinkSubType } : {}),
+        ...(query.merchandiseSubType
+          ? { merchandiseSubType: query.merchandiseSubType }
+          : {}),
         ...(query.status ? { status: query.status } : {}),
+        ...(query.isNew !== undefined ? { isNew: query.isNew } : {}),
         ...(publicOnly ? { status: ProductStatus.ACTIVE } : {}),
       },
       relations: { photos: true },
@@ -33,6 +38,16 @@ export class ProductsService {
       take: limit,
     });
     return { data, total, page, limit };
+  }
+
+  /** Public lookup: an INACTIVE (hidden) product must not be reachable by id. */
+  async findPublicOrFail(id: string): Promise<Product> {
+    const product = await this.productsRepo.findOne({
+      where: { id, status: ProductStatus.ACTIVE },
+      relations: { photos: true },
+    });
+    if (!product) throw new NotFoundException('Product not found');
+    return product;
   }
 
   async findOneOrFail(id: string): Promise<Product> {

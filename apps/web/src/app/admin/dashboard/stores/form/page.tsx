@@ -28,7 +28,6 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/common/form";
 import { ToggleRow } from "@/components/common/choice";
 import { FormActionBar } from "@/components/common/form-action-bar";
-import { PreviewCard } from "@/components/common/preview-card";
 import { PhotoGallery } from "@/components/upload/photo-gallery";
 import { cleanInput } from "@/lib/clean";
 import {
@@ -38,6 +37,8 @@ import {
   useStoreQuery,
   useUpdateStore,
 } from "@/hooks/use-stores";
+import { StoreCard } from "@/components/site/cards";
+import { SitePreview } from "@/components/site/site-preview";
 
 const storeSchema = z.object({
   name: z.string().min(1, "Bắt buộc"),
@@ -164,7 +165,7 @@ function StoreFormInner() {
             <>
               <FormSection icon={Store} tone="emerald" title="Thông tin cửa hàng" description="Tên và giới thiệu ngắn về không gian.">
                 <Field label="Tên cửa hàng" htmlFor="name" required error={errors.name?.message}>
-                  <Input id="name" placeholder="VD: S.t Nguyễn Huệ" {...register("name")} />
+                  <Input id="name" placeholder="VD: S+ Nguyễn Huệ" {...register("name")} />
                 </Field>
                 <Field label="Mô tả / điểm nhấn" htmlFor="description" hint="Không gian, giờ mở cửa, điểm đặc biệt…">
                   <Textarea id="description" rows={4} {...register("description")} />
@@ -178,7 +179,7 @@ function StoreFormInner() {
                     <Textarea id="address" rows={2} className="pl-9" {...register("address")} />
                   </div>
                 </Field>
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label="Điện thoại" htmlFor="phone">
                     <IconInput id="phone" icon={Phone} placeholder="028 xxxx xxxx" {...register("phone")} />
                   </Field>
@@ -236,27 +237,18 @@ function StoreFormInner() {
                 />
               </FormSection>
 
-              <PreviewCard
-                image={coverPhoto}
-                fallbackIcon={Store}
-                imageClassName="aspect-video"
-                title={previewName}
-                titlePlaceholder="Tên cửa hàng"
-                footer={
-                  <div className="space-y-1 pt-1 text-xs text-muted-foreground">
-                    <p className="flex items-start gap-1.5">
-                      <MapPin className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
-                      <span className="line-clamp-2">{previewAddress || "Địa chỉ cửa hàng"}</span>
-                    </p>
-                    {previewPhone && (
-                      <p className="flex items-center gap-1.5 tabular-nums">
-                        <Phone className="size-3.5 shrink-0 text-emerald-600" />
-                        {previewPhone}
-                      </p>
-                    )}
-                  </div>
-                }
-              />
+              <SitePreview>
+                <StoreCard
+                  store={{
+                    name: previewName || "Tên cửa hàng",
+                    address: previewAddress || "Địa chỉ cửa hàng",
+                    phone: previewPhone || null,
+                    photos: coverPhoto
+                      ? [{ id: "preview", sortOrder: 0, media: { id: "preview", url: coverPhoto } }]
+                      : [],
+                  }}
+                />
+              </SitePreview>
             </>
           }
         />

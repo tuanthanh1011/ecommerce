@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -42,54 +41,5 @@ export function PreviewText({
     <span className={cn(!value && "text-muted-foreground/50", className)}>
       {value || placeholder}
     </span>
-  );
-}
-
-/** Media-first card: cover image on top, text below (products, stores, posts). */
-export function PreviewCard({
-  image,
-  fallbackIcon: FallbackIcon,
-  chip,
-  title,
-  titlePlaceholder,
-  body,
-  footer,
-  imageClassName,
-  label,
-}: {
-  image?: string | null;
-  fallbackIcon: LucideIcon;
-  chip?: React.ReactNode;
-  title?: string;
-  titlePlaceholder: string;
-  body?: string;
-  footer?: React.ReactNode;
-  imageClassName?: string;
-  label?: string;
-}) {
-  return (
-    <PreviewFrame label={label}>
-      <div
-        className={cn(
-          "flex aspect-4/3 items-center justify-center overflow-hidden bg-linear-to-br from-amber-100 via-orange-50 to-amber-200 dark:from-amber-500/20 dark:via-stone-800 dark:to-orange-500/10",
-          imageClassName,
-        )}
-      >
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="size-full object-cover" />
-        ) : (
-          <FallbackIcon className="size-10 text-amber-700/30 dark:text-amber-200/30" />
-        )}
-      </div>
-      <div className="space-y-1.5 p-4">
-        {chip}
-        <p className="line-clamp-2 font-semibold tracking-tight">
-          <PreviewText value={title} placeholder={titlePlaceholder} />
-        </p>
-        {body && <p className="line-clamp-2 text-xs text-muted-foreground">{body}</p>}
-        {footer}
-      </div>
-    </PreviewFrame>
   );
 }
