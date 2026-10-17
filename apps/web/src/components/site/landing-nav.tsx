@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useSyncExternalStore } from "react";
 import {
   usePublicJobs,
   usePublicPosts,
@@ -20,47 +22,117 @@ import { MobileNav } from "./mobile-nav";
  * actually has content. These are cheap list queries and, where the params
  * match, the same cache entries the home sections use.
  */
-function useNavItems() {
-  const blocks = usePublicStoryBlocks().data?.length ?? 0;
-  const core = usePublicTeamMembers(TeamMemberGroup.CORE_TEAM).data?.length ?? 0;
-  const advisory = usePublicTeamMembers(TeamMemberGroup.ADVISORY_BOARD).data?.length ?? 0;
-  const stores = usePublicStores(3).data?.total ?? 0;
-  const products = usePublicProducts({ limit: 1 }).data?.total ?? 0;
-  const news = usePublicPosts(HOME_POSTS_FILTER).data?.total ?? 0;
-  const giveBack = usePublicPosts(HOME_GIVE_BACK_FILTER).data?.total ?? 0;
-  const jobs = usePublicJobs(3).data?.total ?? 0;
+type NavItem = { href: string; label: string };
 
-  const pages = [
-    { show: blocks + core + advisory > 0, href: "/story/", label: "Câu Chuyện S+" },
-    { show: stores > 0, href: "/stores/", label: "Cửa Hàng" },
-    { show: products > 0, href: "/products/", label: "Sản Phẩm" },
-    { show: news > 0, href: "/news/", label: "Tin Tức - Sự Kiện" },
-    { show: giveBack > 0, href: "/give-back/", label: "Cho Đi" },
-    { show: jobs > 0, href: "/jobs/", label: "Tuyển Dụng" },
+const HOME_ITEM: NavItem = { href: "/", label: "Trang chủ" };
+const PAGES: NavItem[] = [
+  { href: "/story/", label: "Câu Chuyện S+" },
+  { href: "/stores/", label: "Cửa Hàng" },
+  { href: "/products/", label: "Sản Phẩm" },
+  { href: "/news/", label: "Tin Tức - Sự Kiện" },
+  { href: "/give-back/", label: "Cho Đi" },
+  { href: "/jobs/", label: "Tuyển Dụng" },
+];
+
+/**
+ * Links are full page loads, so the nav is rebuilt on every tab change. The
+ * last resolved list is cached so the header paints at its final width right
+ * away instead of growing item by item as the queries come back.
+ */
+const CACHE_KEY = "site-nav-items";
+const noopSubscribe = () => () => {};
+const readCache = () => {
+  try {
+    return localStorage.getItem(CACHE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+function useNavItems(): NavItem[] | null {
+  const blocksQ = usePublicStoryBlocks();
+  const coreQ = usePublicTeamMembers(TeamMemberGroup.CORE_TEAM);
+  const advisoryQ = usePublicTeamMembers(TeamMemberGroup.ADVISORY_BOARD);
+  const storesQ = usePublicStores(3);
+  const productsQ = usePublicProducts({ limit: 1 });
+  const newsQ = usePublicPosts(HOME_POSTS_FILTER);
+  const giveBackQ = usePublicPosts(HOME_GIVE_BACK_FILTER);
+  const jobsQ = usePublicJobs(3);
+
+  const cached = useSyncExternalStore(noopSubscribe, readCache, () => null);
+
+  const settled = ![
+    blocksQ,
+    coreQ,
+    advisoryQ,
+    storesQ,
+    productsQ,
+    newsQ,
+    giveBackQ,
+    jobsQ,
+  ].some((q) => q.isPending);
+
+  const show = [
+    (blocksQ.data?.length ?? 0) +
+      (coreQ.data?.length ?? 0) +
+      (advisoryQ.data?.length ?? 0) >
+      0,
+    (storesQ.data?.total ?? 0) > 0,
+    (productsQ.data?.total ?? 0) > 0,
+    (newsQ.data?.total ?? 0) > 0,
+    (giveBackQ.data?.total ?? 0) > 0,
+    (jobsQ.data?.total ?? 0) > 0,
   ];
-  return [
-    { href: "/", label: "Trang chủ" },
-    ...pages.filter((p) => p.show).map(({ href, label }) => ({ href, label })),
-  ];
+  const live = [HOME_ITEM, ...PAGES.filter((_, i) => show[i])];
+  const liveKey = JSON.stringify(live);
+
+  useEffect(() => {
+    if (!settled) return;
+    try {
+      localStorage.setItem(CACHE_KEY, liveKey);
+    } catch {
+      /* storage unavailable — header just falls back to the placeholder */
+    }
+  }, [settled, liveKey]);
+
+  if (settled) return live;
+  if (cached) {
+    try {
+      return JSON.parse(cached) as NavItem[];
+    } catch {
+      /* corrupt cache — ignore */
+    }
+  }
+  return null;
 }
+
+const LINK_CLASS =
+  "relative text-sm font-medium whitespace-nowrap text-[#f3e9dc]/90 transition-colors after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-current after:transition-all hover:text-white hover:after:w-full";
 
 export function DesktopNav() {
   const items = useNavItems();
+  // No cache yet: reserve the full width with invisible links so nothing
+  // shifts once the real list arrives.
+  const pending = items === null;
   return (
-    <nav className="hidden items-center gap-6 xl:flex">
-      {items.map((item) => (
-        <a
+    <nav
+      className="hidden items-center gap-6 xl:flex"
+      aria-hidden={pending || undefined}
+    >
+      {(items ?? [HOME_ITEM, ...PAGES]).map((item) => (
+        <Link
           key={item.label}
           href={item.href}
-          className="relative text-sm font-medium whitespace-nowrap text-[#f3e9dc]/90 transition-colors after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-current after:transition-all hover:text-white hover:after:w-full"
+          tabIndex={pending ? -1 : undefined}
+          className={pending ? `${LINK_CLASS} invisible` : LINK_CLASS}
         >
           {item.label}
-        </a>
+        </Link>
       ))}
     </nav>
   );
 }
 
 export function LandingMobileNav() {
-  return <MobileNav items={useNavItems()} />;
+  return <MobileNav items={useNavItems() ?? [HOME_ITEM]} />;
 }

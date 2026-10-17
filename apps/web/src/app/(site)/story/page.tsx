@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PublicShell } from "@/components/site/public-shell";
 import { StoryPageContent } from "@/components/site/story-page";
 
 export const metadata: Metadata = {
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function StoryPage() {
-  return (
-    <PublicShell>
-      <StoryPageContent />
-    </PublicShell>
-  );
+  return <StoryPageContent />;
 }

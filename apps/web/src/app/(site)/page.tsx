@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { HomeContent } from "@/components/site/home-content";
-import { PublicShell } from "@/components/site/public-shell";
 
 export const metadata: Metadata = {
   title: "S+ Coffee",
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPage() {
-  return (
-    <PublicShell>
-      <HomeContent />
-    </PublicShell>
-  );
+  return <HomeContent />;
 }

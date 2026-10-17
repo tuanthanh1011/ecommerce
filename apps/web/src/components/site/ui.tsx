@@ -28,31 +28,35 @@ export function PageHero({
     >
       <div className="bg-grain pointer-events-none absolute inset-0 opacity-[0.14]" />
       <Reveal className="relative mx-auto max-w-3xl px-4">
-        <nav
-          aria-label="Breadcrumb"
-          className="flex items-center justify-center gap-1.5 text-xs text-[#f3e9dc]/70"
-        >
-          <Link href="/" className="hover:text-white">
-            Trang chủ
-          </Link>
-          {crumbs.map((c) => (
-            <span key={c.href} className="flex items-center gap-1.5">
-              <ChevronRight className="size-3" />
-              <Link href={c.href} className="hover:text-white">
-                {c.label}
-              </Link>
-            </span>
-          ))}
-        </nav>
+        {crumbs.length > 0 && (
+          <nav
+            aria-label="Breadcrumb"
+            className="flex items-center justify-center gap-1.5 text-xs text-[#f3e9dc]/70"
+          >
+            {crumbs.map((c, i) => (
+              <span key={c.href} className="flex items-center gap-1.5">
+                {i > 0 && <ChevronRight className="size-3" />}
+                <Link href={c.href} className="hover:text-white">
+                  {c.label}
+                </Link>
+              </span>
+            ))}
+          </nav>
+        )}
         {eyebrow && (
-          <p className="mt-6 text-xs font-semibold tracking-[0.3em] uppercase opacity-80">
+          <p
+            className={cn(
+              "text-xs font-semibold tracking-[0.3em] uppercase opacity-80",
+              crumbs.length > 0 && "mt-6",
+            )}
+          >
             {eyebrow}
           </p>
         )}
         <h1
           className={cn(
             "text-4xl font-semibold tracking-tight text-balance sm:text-5xl",
-            eyebrow ? "mt-2" : "mt-6",
+            eyebrow ? "mt-2" : crumbs.length > 0 && "mt-6",
           )}
           style={{ fontFamily: "var(--font-display)" }}
         >
