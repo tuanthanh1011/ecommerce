@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PublicShell } from "@/components/site/public-shell";
 import { StoresListContent } from "@/components/site/stores-page";
 
 export const metadata: Metadata = {
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function StoresPage() {
-  return (
-    <PublicShell>
-      <StoresListContent />
-    </PublicShell>
-  );
+  return <StoresListContent />;
 }

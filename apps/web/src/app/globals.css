@@ -145,6 +145,9 @@
   }
   html {
     @apply font-sans;
+    /* Always reserve the page scrollbar so content doesn't shift sideways
+       when a page grows taller than the viewport (e.g. after data loads). */
+    overflow-y: scroll;
   }
   ::selection {
     background: color-mix(in oklch, var(--primary) 22%, transparent);
@@ -158,8 +161,8 @@
    * webkit styling off.
    */
   *::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
   }
   *::-webkit-scrollbar-track,
   *::-webkit-scrollbar-corner {
@@ -168,7 +171,7 @@
   *::-webkit-scrollbar-thumb {
     background-color: var(--scroll-thumb);
     background-clip: content-box;
-    border: 3px solid transparent;
+    border: 2px solid transparent;
     border-radius: 999px;
   }
   *::-webkit-scrollbar-thumb:hover {
@@ -189,8 +192,8 @@
     --scroll-thumb-hover: color-mix(in oklch, currentColor 45%, transparent);
   }
   .scrollbar-thin::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
 
   /* Rich-text editor content (no typography plugin installed) */

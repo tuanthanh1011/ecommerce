@@ -387,65 +387,53 @@ export const JOBS = [
     department: 'Vận hành cửa hàng',
     status: JobStatus.OPEN,
     postedDaysAgo: 4,
-    description: `<p>Pha chế và phục vụ đồ uống theo tiêu chuẩn S+, giữ gìn không gian quán sạch sẽ và thân thiện.</p>
-<ul>
-<li>Pha chế đồ uống theo công thức chuẩn.</li>
-<li>Tiếp đón và tư vấn thực đơn cho khách.</li>
-<li>Vệ sinh khu vực làm việc, kiểm kê nguyên liệu.</li>
-</ul>`,
-    requirements: `<ul>
-<li>Từ 18 tuổi, có thể làm việc theo ca (sáng/chiều/tối).</li>
-<li>Thân thiện, chủ động, có tinh thần học hỏi.</li>
-<li>Ưu tiên người có kinh nghiệm pha chế; S+ sẽ đào tạo từ đầu nếu bạn chưa có.</li>
-</ul>`,
+    description: `Pha chế và phục vụ đồ uống theo tiêu chuẩn S+, giữ gìn không gian quán sạch sẽ và thân thiện.
+- Pha chế đồ uống theo công thức chuẩn.
+- Tiếp đón và tư vấn thực đơn cho khách.
+- Vệ sinh khu vực làm việc, kiểm kê nguyên liệu.`,
+    requirements: `- Từ 18 tuổi, có thể làm việc theo ca (sáng/chiều/tối).
+- Thân thiện, chủ động, có tinh thần học hỏi.
+- Ưu tiên người có kinh nghiệm pha chế; S+ sẽ đào tạo từ đầu nếu bạn chưa có.`,
   },
   {
     title: 'Nhân viên phục vụ (Part-time)',
     department: 'Vận hành cửa hàng',
     status: JobStatus.OPEN,
     postedDaysAgo: 7,
-    description: `<p>Hỗ trợ đón khách, order, ra món và giữ gìn không gian quán. Phù hợp với sinh viên.</p>`,
-    requirements: `<ul>
-<li>Sinh viên hoặc đã đi làm, có thể làm tối thiểu 20 giờ/tuần.</li>
-<li>Giao tiếp tốt, trung thực, nhanh nhẹn.</li>
-</ul>`,
+    description: `Hỗ trợ đón khách, order, ra món và giữ gìn không gian quán. Phù hợp với sinh viên.`,
+    requirements: `- Sinh viên hoặc đã đi làm, có thể làm tối thiểu 20 giờ/tuần.
+- Giao tiếp tốt, trung thực, nhanh nhẹn.`,
   },
   {
     title: 'Quản lý cửa hàng',
     department: 'Vận hành cửa hàng',
     status: JobStatus.OPEN,
     postedDaysAgo: 10,
-    description: `<p>Chịu trách nhiệm vận hành một cửa hàng S+: nhân sự, doanh thu, chất lượng dịch vụ và trải nghiệm khách hàng.</p>
-<ul>
-<li>Xây dựng lịch làm việc và đào tạo nhân viên.</li>
-<li>Theo dõi doanh thu, chi phí và tồn kho.</li>
-<li>Đảm bảo tiêu chuẩn chất lượng và vệ sinh an toàn thực phẩm.</li>
-</ul>`,
-    requirements: `<ul>
-<li>Tối thiểu 2 năm kinh nghiệm quản lý trong ngành F&B.</li>
-<li>Kỹ năng lãnh đạo, giải quyết vấn đề tốt.</li>
-<li>Sẵn sàng làm việc ca và cuối tuần.</li>
-</ul>`,
+    description: `Chịu trách nhiệm vận hành một cửa hàng S+: nhân sự, doanh thu, chất lượng dịch vụ và trải nghiệm khách hàng.
+- Xây dựng lịch làm việc và đào tạo nhân viên.
+- Theo dõi doanh thu, chi phí và tồn kho.
+- Đảm bảo tiêu chuẩn chất lượng và vệ sinh an toàn thực phẩm.`,
+    requirements: `- Tối thiểu 2 năm kinh nghiệm quản lý trong ngành F&B.
+- Kỹ năng lãnh đạo, giải quyết vấn đề tốt.
+- Sẵn sàng làm việc ca và cuối tuần.`,
   },
   {
     title: 'Nhân viên Marketing & Nội dung',
     department: 'Marketing',
     status: JobStatus.OPEN,
     postedDaysAgo: 12,
-    description: `<p>Xây dựng nội dung truyền thông trên mạng xã hội, hỗ trợ tổ chức sự kiện và các chiến dịch “Cho đi”.</p>`,
-    requirements: `<ul>
-<li>Có kinh nghiệm viết nội dung, chụp ảnh/dựng video cơ bản.</li>
-<li>Hiểu các nền tảng Facebook, Instagram, TikTok.</li>
-<li>Yêu thích cà phê và văn hoá quán là một lợi thế.</li>
-</ul>`,
+    description: `Xây dựng nội dung truyền thông trên mạng xã hội, hỗ trợ tổ chức sự kiện và các chiến dịch “Cho đi”.`,
+    requirements: `- Có kinh nghiệm viết nội dung, chụp ảnh/dựng video cơ bản.
+- Hiểu các nền tảng Facebook, Instagram, TikTok.
+- Yêu thích cà phê và văn hoá quán là một lợi thế.`,
   },
   {
     title: 'Nhân viên kho (Đã tuyển đủ)',
     department: 'Vận hành',
     status: JobStatus.CLOSED,
     postedDaysAgo: 60,
-    description: `<p>Vị trí đã tuyển đủ. Cảm ơn các bạn đã quan tâm.</p>`,
-    requirements: `<p>—</p>`,
+    description: `Vị trí đã tuyển đủ. Cảm ơn các bạn đã quan tâm.`,
+    requirements: `—`,
   },
 ];
 

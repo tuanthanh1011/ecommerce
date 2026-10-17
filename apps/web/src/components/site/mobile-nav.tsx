@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import {
   Sheet,
@@ -41,7 +42,7 @@ export function MobileNav({
             <SheetClose
               key={item.label}
               render={
-                <a
+                <Link
                   href={item.href}
                   className="rounded-lg px-3 py-2.5 text-sm font-medium text-[#f3e9dc]/90 transition-colors hover:bg-white/10 hover:text-white"
                 />
@@ -52,7 +53,7 @@ export function MobileNav({
           ))}
           <SheetClose
             render={
-              <a
+              <Link
                 href="/admin/login/"
                 className="mt-3 rounded-full border border-[#f3e9dc]/40 px-3 py-2.5 text-center text-sm font-medium text-[#f3e9dc]"
               />

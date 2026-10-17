@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PublicShell } from "@/components/site/public-shell";
 import { JobDetailContent } from "@/components/site/jobs-page";
 
 export const metadata: Metadata = {
@@ -7,9 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function JobDetailPage() {
-  return (
-    <PublicShell>
-      <JobDetailContent />
-    </PublicShell>
-  );
+  return <JobDetailContent />;
 }
