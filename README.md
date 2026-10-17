@@ -22,6 +22,7 @@ Website công khai và CMS nội bộ của chuỗi cà phê S+. Monorepo npm wo
 | `npm run migration:generate -- Ten` | Sinh migration mới từ thay đổi entity |
 | `npm run migration:revert` | Hoàn tác migration gần nhất |
 | `npm run seed` | Tạo tài khoản admin đầu tiên (idempotent) |
+| `npm run seed:demo` | Nạp dữ liệu demo đầy đủ (sản phẩm, cửa hàng, bài viết, tuyển dụng, câu chuyện, đội ngũ, trang chủ, liên hệ, tài liệu nội bộ…). Idempotent — chạy lại chỉ cập nhật. Nội dung ở `apps/api/src/database/seed-data.ts` |
 | `npm run garage:setup` | Bật chế độ "website" công khai cho bucket Garage (chạy 1 lần sau lần `docker compose up` đầu tiên) |
 
 ## Biến môi trường
@@ -149,3 +150,16 @@ Ghi vào `backups/<timestamp>/db.sql.gz` và `backups/<timestamp>/media/...` tr�
 2. **Variables**: `NEXT_PUBLIC_API_BASE_URL` — URL public của API (vd. `https://api.yourdomain.com`), build cứng vào `web`.
 3. Security Group / firewall của VPS: mở 22, 80 và (nếu trình duyệt gọi trực tiếp) 3001, 3900, 3902.
 4. Tạo admin đầu tiên (một lần, chạy từ máy có `DATABASE_URL` trỏ tới DB production): `npm run seed`.
+
+### Nạp dữ liệu demo lên production
+
+Chạy **sau** khi `api` đã khởi động (migration chạy tự động lúc khởi động). Dữ liệu là nội dung giả lập (tên, địa chỉ, SĐT đều là demo) — sửa trong CMS hoặc trong `seed-data.ts` trước khi công khai:
+
+```bash
+cd /opt/ecommerce   # VPS_DEPLOY_PATH
+docker compose -f docker-compose.prod.yml exec api node dist/database/seed-demo.js
+# tài khoản admin đầu tiên (nếu chưa có):
+docker compose -f docker-compose.prod.yml exec api node dist/database/seed.js
+```
+
+Ảnh demo là SVG minh hoạ nằm ở `apps/web/public/images/seed/` (đi cùng image `web`), thay bằng ảnh thật qua CMS khi có.

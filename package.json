@@ -10,6 +10,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "seed": "turbo run seed",
+    "seed:demo": "npm run seed:demo -w api",
     "migration:generate": "npm run migration:generate -w api --",
     "migration:run": "npm run migration:run -w api",
     "migration:revert": "npm run migration:revert -w api",

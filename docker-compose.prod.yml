@@ -13,9 +13,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    # Not exposed to the host on purpose — only reachable from the `api`
-    # container on the compose network. Local dev's docker-compose.yml maps
-    # 5433 for convenience; production doesn't need Postgres public.
+    # Published so seeds / admin tools can connect from outside. Access is
+    # gated by the EC2 security group — close the 5432 inbound rule when not
+    # needed, and make sure POSTGRES_PASSWORD is not the default.
+    ports:
+      - '5432:5432'
 
   garage:
     image: dxflrs/garage:v2.4.1
