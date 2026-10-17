@@ -170,7 +170,11 @@ jobs:
               echo "pull failed, retry $n/3..."; sleep 5
             done
 
-            $COMPOSE up -d postgres garage
+            $COMPOSE up -d postgres
+            # Recreate garage every time: its config is a single-file bind
+            # mount, which goes stale when the file is replaced (or when the
+            # container was created while the file was still missing).
+            $COMPOSE up -d --force-recreate --no-deps garage
             $COMPOSE up -d --force-recreate --no-deps api web
 
             # Idempotent: enables public website access on the Garage bucket.
