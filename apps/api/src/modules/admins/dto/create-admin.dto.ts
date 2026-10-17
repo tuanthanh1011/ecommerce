@@ -22,7 +22,7 @@ export class CreateAdminDto {
   @IsString()
   fullName: string;
 
-  @ApiPropertyOptional({ enum: AdminRole, default: AdminRole.ADMIN })
+  @ApiPropertyOptional({ enum: AdminRole, default: AdminRole.EMPLOYEE })
   @IsOptional()
   @IsEnum(AdminRole)
   role?: AdminRole;

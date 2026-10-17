@@ -15,6 +15,7 @@ import {
   useAdminsQuery,
   useDeactivateAdmin,
   useUnlockAdmin,
+  useActivateAdmin,
   type AdminAccount,
 } from "@/hooks/use-admins";
 import { useCurrentAdmin } from "@/hooks/use-auth";
@@ -29,6 +30,7 @@ export default function AdminsPage() {
   const { data, isLoading } = useAdminsQuery();
   const deactivateAdmin = useDeactivateAdmin();
   const unlockAdmin = useUnlockAdmin();
+  const activateAdmin = useActivateAdmin();
   const { data: me } = useCurrentAdmin();
 
   const all = data ?? [];
@@ -97,6 +99,25 @@ export default function AdminsPage() {
       header: "",
       cell: ({ row }) => (
         <RowActions>
+          {!row.original.isActive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-emerald-700 hover:text-emerald-800"
+              disabled={activateAdmin.isPending}
+              onClick={async () => {
+                try {
+                  await activateAdmin.mutateAsync(row.original.id);
+                  toast.success("Đã mở lại tài khoản");
+                } catch {
+                  toast.error("Thao tác thất bại");
+                }
+              }}
+            >
+              <LockOpen />
+              Mở lại
+            </Button>
+          )}
           {row.original.isActive && isLoginLocked(row.original) && (
             <Button
               variant="ghost"

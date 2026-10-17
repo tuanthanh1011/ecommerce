@@ -11,6 +11,7 @@
     "lint": "turbo run lint",
     "seed": "turbo run seed",
     "seed:demo": "npm run seed:demo -w api",
+    "reset-admin": "npm run reset-admin -w api",
     "migration:generate": "npm run migration:generate -w api --",
     "migration:run": "npm run migration:run -w api",
     "migration:revert": "npm run migration:revert -w api",

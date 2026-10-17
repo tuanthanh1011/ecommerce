@@ -11,6 +11,7 @@ import {
   KeyRound,
   Loader2,
   Lock,
+  LockOpen,
   Mail,
   Save,
   ShieldAlert,
@@ -30,9 +31,9 @@ import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import {
   useAdminsQuery,
   useCreateAdmin,
+  useActivateAdmin,
   useDeactivateAdmin,
   useUpdateAdminPassword,
-  useUpdateAdminRole,
   type AdminAccount,
 } from "@/hooks/use-admins";
 import { useCurrentAdmin } from "@/hooks/use-auth";
@@ -268,8 +269,8 @@ function CreateAdminForm() {
                   </Field>
                 </div>
               </FormSection>
-              <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Quyết định những mục nào tài khoản này thấy được trong CMS.">
-                <RoleSelect value={role} onChange={(r) => setValue("role", r, { shouldDirty: true })} />
+              <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Hệ thống chỉ có một tài khoản Quản trị viên, tài khoản mới luôn là Nhân viên.">
+                <RoleSelect value={role} onChange={() => {}} disabled />
               </FormSection>
               <FormSection icon={KeyRound} tone="amber" title="Mật khẩu đăng nhập" description="Gửi mật khẩu cho người dùng qua kênh riêng tư.">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -306,27 +307,16 @@ function CreateAdminForm() {
 function EditAdminForm({ admin }: { admin: AdminAccount }) {
   const router = useRouter();
   const updatePassword = useUpdateAdminPassword(admin.id);
-  const updateRole = useUpdateAdminRole();
   const deactivate = useDeactivateAdmin();
+  const activate = useActivateAdmin();
   const [confirmLock, setConfirmLock] = useState(false);
-  const [role, setRole] = useState(admin.role);
+  const role = admin.role;
   const { data: me } = useCurrentAdmin();
   const isSelf = me?.id === admin.id;
   // Only Employee accounts can be locked, and nobody can lock or demote
   // themselves. The API enforces the same rules.
   const canLock = admin.isActive && admin.role === AdminRole.EMPLOYEE && !isSelf;
 
-  const handleRoleChange = async (nextRole: typeof role) => {
-    const previous = role;
-    setRole(nextRole);
-    try {
-      await updateRole.mutateAsync({ id: admin.id, role: nextRole });
-      toast.success("Đã cập nhật vai trò");
-    } catch {
-      setRole(previous);
-      toast.error("Cập nhật vai trò thất bại");
-    }
-  };
   const {
     register,
     handleSubmit,
@@ -377,17 +367,8 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
                   </Field>
                 </div>
               </FormSection>
-              <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Áp dụng ngay lập tức, không cần lưu.">
-                <RoleSelect
-                  value={role}
-                  onChange={handleRoleChange}
-                  disabled={updateRole.isPending || isSelf}
-                />
-                {isSelf && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Bạn không thể đổi vai trò của chính mình.
-                  </p>
-                )}
+              <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Hệ thống chỉ có một tài khoản Quản trị viên nên vai trò không thể thay đổi.">
+                <RoleSelect value={role} onChange={() => {}} disabled />
               </FormSection>
               <FormSection icon={KeyRound} tone="amber" title="Đổi mật khẩu" description="Mật khẩu mới có hiệu lực ngay ở lần đăng nhập tiếp theo.">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -406,6 +387,31 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
             <>
               <AccountPreview name={admin.fullName} email={admin.email} role={role} active={admin.isActive} />
               <PermissionsCard role={role} />
+              {!admin.isActive && (
+                <section className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 dark:border-emerald-500/20 dark:bg-emerald-500/5">
+                  <h2 className="text-[15px] font-semibold tracking-tight">Tài khoản đang bị khoá</h2>
+                  <p className="mt-1 text-[13px] text-muted-foreground">
+                    Mở lại để tài khoản này có thể đăng nhập CMS.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-full"
+                    disabled={activate.isPending}
+                    onClick={async () => {
+                      try {
+                        await activate.mutateAsync(admin.id);
+                        toast.success("Đã mở lại tài khoản");
+                      } catch {
+                        toast.error("Thao tác thất bại");
+                      }
+                    }}
+                  >
+                    <LockOpen />
+                    Mở lại tài khoản
+                  </Button>
+                </section>
+              )}
               {canLock && (
                 <section className="rounded-2xl border border-red-200 bg-red-50/50 p-5 dark:border-red-500/20 dark:bg-red-500/5">
                   <div className="flex items-start gap-3">

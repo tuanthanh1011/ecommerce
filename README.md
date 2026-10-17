@@ -22,6 +22,7 @@ Website công khai và CMS nội bộ của chuỗi cà phê S+. Monorepo npm wo
 | `npm run migration:generate -- Ten` | Sinh migration mới từ thay đổi entity |
 | `npm run migration:revert` | Hoàn tác migration gần nhất |
 | `npm run seed` | Tạo tài khoản admin đầu tiên (idempotent) |
+| `npm run reset-admin` | Khôi phục tài khoản Quản trị viên duy nhất: đặt mật khẩu mới (`ADMIN_NEW_PASSWORD`, mặc định sinh ngẫu nhiên và in ra), mở khoá, kích hoạt lại, đăng xuất mọi phiên; tạo lại nếu tài khoản đã mất |
 | `npm run seed:demo` | Nạp dữ liệu demo đầy đủ (sản phẩm, cửa hàng, bài viết, tuyển dụng, câu chuyện, đội ngũ, trang chủ, liên hệ, tài liệu nội bộ…). Idempotent — chạy lại chỉ cập nhật. Nội dung ở `apps/api/src/database/seed-data.ts` |
 | `npm run garage:setup` | Bật chế độ "website" công khai cho bucket Garage (chạy 1 lần sau lần `docker compose up` đầu tiên) |
 
@@ -150,6 +151,16 @@ Ghi vào `backups/<timestamp>/db.sql.gz` và `backups/<timestamp>/media/...` tr�
 2. **Variables**: `NEXT_PUBLIC_API_BASE_URL` — URL public của API (vd. `https://api.yourdomain.com`), build cứng vào `web`.
 3. Security Group / firewall của VPS: mở 22, 80 và (nếu trình duyệt gọi trực tiếp) 3001, 3900, 3902.
 4. Tạo admin đầu tiên (một lần, chạy từ máy có `DATABASE_URL` trỏ tới DB production): `npm run seed`.
+
+### Khôi phục tài khoản Quản trị viên
+
+Hệ thống chỉ có **một** tài khoản Quản trị viên (tạo bằng `seed`); mọi tài khoản tạo thêm trong CMS đều là Nhân viên. Khi quên mật khẩu hoặc mất tài khoản này, chạy trên VPS (không cần đăng nhập CMS):
+
+```bash
+cd /opt/ecommerce   # VPS_DEPLOY_PATH
+docker compose -f docker-compose.prod.yml exec -e ADMIN_NEW_PASSWORD='MatKhauMoi!123' api node dist/database/reset-admin.js
+# bỏ -e ... để hệ thống tự sinh mật khẩu ngẫu nhiên và in ra màn hình
+```
 
 ### Nạp dữ liệu demo lên production
 

@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import AppDataSource from './data-source';
 import { Admin } from '../modules/admins/entities/admin.entity';
+import { AdminRole } from '../common/enums';
 
 async function seed() {
   const dataSource = await AppDataSource.initialize();
@@ -10,12 +11,21 @@ async function seed() {
   const password = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe123!';
   const fullName = process.env.SEED_ADMIN_NAME ?? 'Super Admin';
 
-  const existing = await adminsRepo.findOne({ where: { email } });
+  // One Admin only: skip if any exists, whatever its email. To recover a lost
+  // Admin, run `npm run reset-admin` instead.
+  const existing = await adminsRepo.findOne({
+    where: { role: AdminRole.ADMIN },
+  });
   if (existing) {
-    console.log(`Admin ${email} already exists, skipping.`);
+    console.log(`Admin ${existing.email} already exists, skipping.`);
   } else {
     const passwordHash = await bcrypt.hash(password, 10);
-    const admin = adminsRepo.create({ email, passwordHash, fullName });
+    const admin = adminsRepo.create({
+      email,
+      passwordHash,
+      fullName,
+      role: AdminRole.ADMIN,
+    });
     await adminsRepo.save(admin);
     console.log(`Seeded admin: ${email} / ${password}`);
   }
