@@ -41,6 +41,9 @@ export const envValidationSchema = Joi.object({
   RATE_LIMIT_TTL_SECONDS: Joi.number().default(60),
   RATE_LIMIT_MAX: Joi.number().default(120),
 
+  LOGIN_MAX_FAILED_ATTEMPTS: Joi.number().default(5),
+  LOGIN_LOCK_MINUTES: Joi.number().default(15),
+
   REQUEST_LOG_RETENTION_DAYS: Joi.number().default(30),
 
   // Advisory + enforced cap on `sizeBytes` declared at presign time (see

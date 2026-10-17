@@ -35,6 +35,7 @@ import {
   useUpdateAdminRole,
   type AdminAccount,
 } from "@/hooks/use-admins";
+import { useCurrentAdmin } from "@/hooks/use-auth";
 import { AdminRole, ADMIN_ROLE_LABELS } from "@/lib/constants";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -309,6 +310,11 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
   const deactivate = useDeactivateAdmin();
   const [confirmLock, setConfirmLock] = useState(false);
   const [role, setRole] = useState(admin.role);
+  const { data: me } = useCurrentAdmin();
+  const isSelf = me?.id === admin.id;
+  // Only Employee accounts can be locked, and nobody can lock or demote
+  // themselves. The API enforces the same rules.
+  const canLock = admin.isActive && admin.role === AdminRole.EMPLOYEE && !isSelf;
 
   const handleRoleChange = async (nextRole: typeof role) => {
     const previous = role;
@@ -372,7 +378,16 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
                 </div>
               </FormSection>
               <FormSection icon={ShieldCheck} tone="indigo" title="Vai trò" description="Áp dụng ngay lập tức, không cần lưu.">
-                <RoleSelect value={role} onChange={handleRoleChange} disabled={updateRole.isPending} />
+                <RoleSelect
+                  value={role}
+                  onChange={handleRoleChange}
+                  disabled={updateRole.isPending || isSelf}
+                />
+                {isSelf && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Bạn không thể đổi vai trò của chính mình.
+                  </p>
+                )}
               </FormSection>
               <FormSection icon={KeyRound} tone="amber" title="Đổi mật khẩu" description="Mật khẩu mới có hiệu lực ngay ở lần đăng nhập tiếp theo.">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -391,7 +406,7 @@ function EditAdminForm({ admin }: { admin: AdminAccount }) {
             <>
               <AccountPreview name={admin.fullName} email={admin.email} role={role} active={admin.isActive} />
               <PermissionsCard role={role} />
-              {admin.isActive && (
+              {canLock && (
                 <section className="rounded-2xl border border-red-200 bg-red-50/50 p-5 dark:border-red-500/20 dark:bg-red-500/5">
                   <div className="flex items-start gap-3">
                     <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-500/15">

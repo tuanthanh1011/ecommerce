@@ -20,6 +20,14 @@ export class Admin extends BaseEntity {
   @Column({ default: true })
   isActive: boolean;
 
+  /** Consecutive wrong passwords since the last success / lock. */
+  @Column({ type: 'int', default: 0 })
+  failedLoginAttempts: number;
+
+  /** Login is refused until this moment (null = not locked). */
+  @Column({ type: 'timestamptz', nullable: true })
+  lockedUntil: Date | null;
+
   @OneToMany(() => RefreshToken, (rt) => rt.admin)
   refreshTokens: RefreshToken[];
 }

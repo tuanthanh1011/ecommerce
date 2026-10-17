@@ -14,6 +14,8 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AdminRole } from '../../common/enums';
+import { CurrentAdmin } from '../../common/decorators/current-admin.decorator';
+import type { CurrentAdminPayload } from '../../common/decorators/current-admin.decorator';
 
 // Account management is Admin-only — Employee accounts are managed by Admins,
 // never self-service, and Employees have no business seeing the admin list.
@@ -35,8 +37,12 @@ export class AdminsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
-    return this.adminsService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateAdminDto,
+    @CurrentAdmin() me: CurrentAdminPayload,
+  ) {
+    return this.adminsService.update(id, dto, me.sub);
   }
 
   @Patch(':id/password')
@@ -48,9 +54,18 @@ export class AdminsController {
     return { success: true };
   }
 
+  @Post(':id/unlock')
+  async unlock(@Param('id') id: string) {
+    await this.adminsService.unlock(id);
+    return { success: true };
+  }
+
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.adminsService.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @CurrentAdmin() me: CurrentAdminPayload,
+  ) {
+    await this.adminsService.remove(id, me.sub);
     return { success: true };
   }
 }

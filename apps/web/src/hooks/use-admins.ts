@@ -8,6 +8,8 @@ export interface AdminAccount {
   fullName: string;
   role: AdminRole;
   isActive: boolean;
+  /** Set while login is temporarily blocked after too many wrong passwords. */
+  lockedUntil?: string | null;
 }
 
 export interface CreateAdminInput {
@@ -48,6 +50,14 @@ export function useDeactivateAdmin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => apiClient.delete(`/admin/admins/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
+  });
+}
+
+export function useUnlockAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.post(`/admin/admins/${id}/unlock`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
   });
 }

@@ -29,11 +29,42 @@ export class AuthService {
     if (!admin || !admin.isActive) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const matches = await bcrypt.compare(password, admin.passwordHash);
-    if (!matches) {
+    // A locked account gets the same generic error as a wrong password so the
+    // response never reveals which emails exist.
+    if (admin.lockedUntil && admin.lockedUntil.getTime() > Date.now()) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    const matches = await bcrypt.compare(password, admin.passwordHash);
+    if (!matches) {
+      await this.registerFailedLogin(admin);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (admin.failedLoginAttempts > 0 || admin.lockedUntil) {
+      admin.failedLoginAttempts = 0;
+      admin.lockedUntil = null;
+      await this.adminsRepo.save(admin);
+    }
     return admin;
+  }
+
+  private async registerFailedLogin(admin: Admin): Promise<void> {
+    const max = this.configService.get<number>('LOGIN_MAX_FAILED_ATTEMPTS', 5);
+    const lockMinutes = this.configService.get<number>(
+      'LOGIN_LOCK_MINUTES',
+      15,
+    );
+    // An expired lock starts a fresh count.
+    const expired =
+      admin.lockedUntil && admin.lockedUntil.getTime() <= Date.now();
+    const attempts = (expired ? 0 : admin.failedLoginAttempts) + 1;
+    if (attempts >= max) {
+      admin.failedLoginAttempts = 0;
+      admin.lockedUntil = new Date(Date.now() + lockMinutes * 60_000);
+    } else {
+      admin.failedLoginAttempts = attempts;
+      admin.lockedUntil = null;
+    }
+    await this.adminsRepo.save(admin);
   }
 
   async login(
