@@ -89,7 +89,8 @@ export function SectionHeading({
   linkLabel = "Xem tất cả",
 }: {
   pill: string;
-  title: string;
+  /** Omit for a pill + link only. */
+  title?: string;
   /** Adds a "see all" link to the matching page. */
   href?: string;
   linkLabel?: string;
@@ -102,12 +103,14 @@ export function SectionHeading({
       >
         {pill}
       </span>
-      <h2
-        className="mt-5 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl"
-        style={{ fontFamily: "var(--font-display)" }}
-      >
-        {title}
-      </h2>
+      {title && (
+        <h2
+          className="mt-5 text-3xl font-semibold tracking-tight text-stone-900 sm:text-4xl"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {title}
+        </h2>
+      )}
       {href && (
         <Link
           href={href}

@@ -34,7 +34,6 @@ export function NewProductsSection() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <SectionHeading
           pill="Sản Phẩm Mới"
-          title="Vừa ra lò, chờ bạn thử"
           href="/products/"
           linkLabel="Xem tất cả sản phẩm"
         />
@@ -48,6 +47,7 @@ export function NewProductsSection() {
                   <ProductItem
                     product={product}
                     href={`/products/detail/?id=${product.id}`}
+                    imageOnly
                   />
                 </Reveal>
               ))}

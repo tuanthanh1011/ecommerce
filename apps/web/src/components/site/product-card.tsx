@@ -14,6 +14,7 @@ export function ProductCard({
   imageUrl,
   badge = "Mới",
   unoptimized,
+  imageOnly,
 }: {
   name: string;
   /** No photo yet → a plain brand-coloured tile, never another product's image. */
@@ -21,6 +22,8 @@ export function ProductCard({
   badge?: string | null;
   /** Preview images (blob: URLs, local uploads) can't go through next/image's loader. */
   unoptimized?: boolean;
+  /** Just the picture (and badge): no name caption, no hover gradient. */
+  imageOnly?: boolean;
 }) {
   return (
     <div
@@ -54,13 +57,17 @@ export function ProductCard({
           />
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent transition-opacity group-hover:from-black/85" />
-      <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-        <p className="line-clamp-1 text-base font-semibold text-white sm:text-lg">{name}</p>
-        <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-white/0 transition-all group-hover:text-white/90">
-          Xem chi tiết <ArrowRight className="size-3" />
-        </span>
-      </div>
+      {!imageOnly && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent transition-opacity group-hover:from-black/85" />
+          <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+            <p className="line-clamp-1 text-base font-semibold text-white sm:text-lg">{name}</p>
+            <span className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-white/0 transition-all group-hover:text-white/90">
+              Xem chi tiết <ArrowRight className="size-3" />
+            </span>
+          </div>
+        </>
+      )}
     </div>
   );
 }

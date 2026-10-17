@@ -175,11 +175,14 @@ export function ProductItem({
   product,
   href,
   unoptimized,
+  imageOnly,
 }: {
   product: Pick<Product, "name" | "description" | "price" | "isNew" | "photos">;
   href?: string;
   /** Preview images (blob: URLs) can't go through next/image's loader. */
   unoptimized?: boolean;
+  /** Teaser form (home page): the picture only — no name, description or price. */
+  imageOnly?: boolean;
 }) {
   const [cover] = photoUrls(product.photos);
   const card = (
@@ -188,6 +191,7 @@ export function ProductItem({
       imageUrl={cover}
       badge={product.isNew ? "Mới" : null}
       unoptimized={unoptimized}
+      imageOnly={imageOnly}
     />
   );
   return (
@@ -199,14 +203,16 @@ export function ProductItem({
       ) : (
         card
       )}
-      <div className="mt-3 flex items-baseline justify-between gap-x-3 px-1">
-        <p className="line-clamp-1 min-w-0 flex-1 text-sm text-stone-600">{product.description}</p>
-        {product.price && (
-          <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: MAROON }}>
-            {formatPrice(product.price)}
-          </p>
-        )}
-      </div>
+      {!imageOnly && (
+        <div className="mt-3 flex items-baseline justify-between gap-x-3 px-1">
+          <p className="line-clamp-1 min-w-0 flex-1 text-sm text-stone-600">{product.description}</p>
+          {product.price && (
+            <p className="shrink-0 text-sm font-semibold tabular-nums" style={{ color: MAROON }}>
+              {formatPrice(product.price)}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
