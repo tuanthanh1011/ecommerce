@@ -116,6 +116,12 @@ jobs:
             set -e
             cd "${{ secrets.VPS_DEPLOY_PATH }}"
 
+            # If a bind-mounted file was missing on an earlier `compose up`,
+            # Docker created a root-owned directory in its place - remove it.
+            for f in .env infra/garage/garage.prod.toml; do
+              if [ -d "$f" ]; then sudo rm -rf "$f"; fi
+            done
+
             # .env: secret > existing file on the VPS > generated from .env.example
             if [ -f env.deploy ]; then
               mv env.deploy .env
