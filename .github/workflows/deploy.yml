@@ -74,8 +74,8 @@ jobs:
           cp docker-compose.prod.yml bundle/
           cp .env.example bundle/env.example
           cp infra/garage/garage.prod.toml.example bundle/infra/garage/
-          if [ -n "$ENV_FILE" ]; then printf '%s\n' "$ENV_FILE" > bundle/env.deploy; fi
-          if [ -n "$GARAGE_PROD_TOML" ]; then printf '%s\n' "$GARAGE_PROD_TOML" > bundle/infra/garage/garage.prod.toml.deploy; fi
+          if [ -n "$ENV_FILE" ]; then printf '%s\n' "$ENV_FILE" | tr -d '\r' > bundle/env.deploy; fi
+          if [ -n "$GARAGE_PROD_TOML" ]; then printf '%s\n' "$GARAGE_PROD_TOML" | tr -d '\r' > bundle/infra/garage/garage.prod.toml.deploy; fi
 
       - name: Prepare VPS directory
         uses: appleboy/ssh-action@v1.2.0
@@ -149,6 +149,9 @@ jobs:
                 -e "s|^metrics_token = .*|metrics_token = \"$(openssl rand -base64 32)\"|" "$G"
               echo "::warning::garage.prod.toml created from the example with generated secrets - set GARAGE_PROD_TOML for real root_domain values"
             fi
+            # Files pasted from Windows may carry CRLF: strip it, since a stray
+            # CR ends up inside values (e.g. bucket name "media<CR>").
+            sed -i 's/\r$//' .env "$G"
             chmod 600 .env "$G"
 
             # First run on a fresh VPS: install Docker (+ compose plugin).
@@ -180,7 +183,7 @@ jobs:
             # Idempotent: make sure the bucket has a GLOBAL alias (the default
             # bucket may only carry a key-local one) and enable public website
             # access on it. Retries while Garage finishes starting up.
-            BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | cut -d= -f2- || true)"
+            BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | cut -d= -f2- | tr -d '\r"' || true)"
             BUCKET="${BUCKET:-media}"
             GARAGE="$COMPOSE exec -T garage /garage"
             n=0
