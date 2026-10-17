@@ -177,7 +177,7 @@ jobs:
             BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | cut -d= -f2- || true)"
             n=0
             until $COMPOSE exec -T garage /garage bucket website --allow --index-document index.html "${BUCKET:-media}"; do
-              n=$((n+1)); [ "$n" -ge 10 ] && { echo "garage bucket setup failed"; exit 1; }
+              n=$((n+1)); [ "$n" -ge 10 ] && { echo "garage bucket setup failed"; $COMPOSE ps -a; $COMPOSE logs --tail 60 garage; ls -la infra/garage; exit 1; }
               sleep 3
             done
 
