@@ -136,19 +136,16 @@ Ghi vào `backups/<timestamp>/db.sql.gz` và `backups/<timestamp>/media/...` tr�
 
 ## Deploy production (GitHub Actions → VPS)
 
-`.github/workflows/deploy.yml`: push lên `main` → build 2 image (`api`, `web`) → push lên GHCR → SSH vào VPS, `git pull` + `docker compose -f docker-compose.prod.yml pull && up -d`. VPS không build gì, chỉ pull image.
+`.github/workflows/deploy.yml`: push lên `main` → build 2 image (`api`, `web`) → push lên GHCR → gửi `docker-compose.prod.yml`, `.env`, `infra/garage/*` lên VPS qua SSH/SCP → `docker compose pull` + `up -d` (Postgres, Garage, api, web) → bật website công khai cho bucket Garage. VPS **không cần clone repo** và không build gì; lần đầu workflow tự cài Docker và đăng nhập GHCR bằng token của chính lần chạy đó.
 
 ### Thiết lập một lần
 
-1. **Secrets** (GitHub → Settings → Secrets and variables → Actions): `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (private key), `VPS_PORT` (bỏ qua nếu 22), `VPS_DEPLOY_PATH` (thư mục clone repo, vd. `/opt/ecommerce`).
+1. **Secrets** (GitHub → Settings → Secrets and variables → Actions):
+   - `VPS_HOST`, `VPS_USER` (vd. `ubuntu` trên EC2, cần `sudo` không mật khẩu), `VPS_SSH_KEY` (private key đầy đủ), `VPS_PORT` (bỏ qua nếu 22), `VPS_DEPLOY_PATH` (đường dẫn tuyệt đối, vd. `/opt/ecommerce`; workflow tự tạo).
+   - `ENV_FILE` (tuỳ chọn): **toàn bộ nội dung** file `.env` production. Có secret này thì mỗi lần deploy ghi đè `.env` trên VPS.
+   - `GARAGE_PROD_TOML` (tuỳ chọn): **toàn bộ nội dung** `infra/garage/garage.prod.toml`, tương tự.
+   - Nếu để trống và VPS chưa có file, workflow tự copy từ `.env.example` / `garage.prod.toml.example` và **sinh sẵn** JWT secrets, key Garage, rpc/admin token. Các giá trị khác (CORS_ORIGIN, R2_*, SEED_ADMIN_*, domain Garage) vẫn là giá trị mẫu — nên đặt secret thật hoặc sửa file trên VPS. File đã có trên VPS không bị ghi đè.
+   - Đặt từ file: `gh secret set ENV_FILE < .env` (PowerShell: `Get-Content .env -Raw | gh secret set ENV_FILE`).
 2. **Variables**: `NEXT_PUBLIC_API_BASE_URL` — URL public của API (vd. `https://api.yourdomain.com`), build cứng vào `web`.
-3. Trên VPS (đã cài Docker + Compose plugin):
-   ```bash
-   git clone https://github.com/tuanthanh1011/ecommerce.git /opt/ecommerce
-   cd /opt/ecommerce
-   cp .env.example .env                                                     # điền secret thật
-   cp infra/garage/garage.prod.toml.example infra/garage/garage.prod.toml   # điền secret + domain thật
-   echo "<public key>" >> ~/.ssh/authorized_keys
-   ```
-   Sau lần `docker compose -f docker-compose.prod.yml up -d` đầu tiên, chạy `npm run garage:setup` (hoặc `sh infra/garage/setup.sh`) một lần.
-4. Image trên GHCR mặc định **private**: đổi sang **Public** ở tab Packages (`ecommerce-api`, `ecommerce-web`), hoặc giữ private và `docker login ghcr.io` một lần trên VPS bằng PAT có quyền `read:packages`.
+3. Security Group / firewall của VPS: mở 22, 80 và (nếu trình duyệt gọi trực tiếp) 3001, 3900, 3902.
+4. Tạo admin đầu tiên (một lần, chạy từ máy có `DATABASE_URL` trỏ tới DB production): `npm run seed`.

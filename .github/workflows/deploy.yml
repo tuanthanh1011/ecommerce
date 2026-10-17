@@ -55,7 +55,29 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: SSH and redeploy on VPS
+      # The VPS needs no git checkout: everything it runs (compose file,
+      # .env, Garage config) is shipped from here, so a fresh server only
+      # needs SSH access. .env and garage.prod.toml are gitignored, so their
+      # contents come from the optional ENV_FILE / GARAGE_PROD_TOML secrets.
+      # When a secret is empty and the file doesn't exist on the VPS yet, the
+      # VPS copies it from the committed .example (see "Redeploy on VPS").
+      # No dotfiles at the bundle root: the scp glob below skips them.
+      - uses: actions/checkout@v4
+
+      - name: Stage deploy bundle
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+          GARAGE_PROD_TOML: ${{ secrets.GARAGE_PROD_TOML }}
+        run: |
+          set -e
+          mkdir -p bundle/infra/garage
+          cp docker-compose.prod.yml bundle/
+          cp .env.example bundle/env.example
+          cp infra/garage/garage.prod.toml.example bundle/infra/garage/
+          if [ -n "$ENV_FILE" ]; then printf '%s\n' "$ENV_FILE" > bundle/env.deploy; fi
+          if [ -n "$GARAGE_PROD_TOML" ]; then printf '%s\n' "$GARAGE_PROD_TOML" > bundle/infra/garage/garage.prod.toml.deploy; fi
+
+      - name: Prepare VPS directory
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -64,9 +86,95 @@ jobs:
           port: ${{ secrets.VPS_PORT || '22' }}
           script: |
             set -e
-            cd ${{ secrets.VPS_DEPLOY_PATH }}
-            git pull origin main
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d postgres
-            docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps api web
-            docker image prune -f
+            sudo mkdir -p "${{ secrets.VPS_DEPLOY_PATH }}"
+            sudo chown "$(id -un)":"$(id -gn)" "${{ secrets.VPS_DEPLOY_PATH }}"
+
+      - name: Upload deploy bundle
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          source: bundle/*
+          target: ${{ secrets.VPS_DEPLOY_PATH }}
+          strip_components: 1
+          overwrite: true
+
+      - name: Redeploy on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: GHCR_USER,GHCR_TOKEN
+          script: |
+            set -e
+            cd "${{ secrets.VPS_DEPLOY_PATH }}"
+
+            # .env: secret > existing file on the VPS > generated from .env.example
+            if [ -f env.deploy ]; then
+              mv env.deploy .env
+            elif [ ! -f .env ]; then
+              cp env.example .env
+              sed -i \
+                -e "s|^NODE_ENV=.*|NODE_ENV=production|" \
+                -e "s|^JWT_ACCESS_SECRET=.*|JWT_ACCESS_SECRET=$(openssl rand -hex 32)|" \
+                -e "s|^JWT_REFRESH_SECRET=.*|JWT_REFRESH_SECRET=$(openssl rand -hex 32)|" \
+                -e "s|^GARAGE_ACCESS_KEY_ID=.*|GARAGE_ACCESS_KEY_ID=GK$(openssl rand -hex 12)|" \
+                -e "s|^GARAGE_SECRET_ACCESS_KEY=.*|GARAGE_SECRET_ACCESS_KEY=$(openssl rand -hex 32)|" .env
+              echo "::warning::.env created from .env.example with generated secrets - set ENV_FILE (or edit $PWD/.env) for CORS_ORIGIN, R2_*, SEED_ADMIN_*, GARAGE_PUBLIC_*"
+            fi
+            rm -f env.example
+
+            # garage.prod.toml: same order of precedence
+            G=infra/garage/garage.prod.toml
+            if [ -f "$G.deploy" ]; then
+              mv "$G.deploy" "$G"
+            elif [ ! -f "$G" ]; then
+              cp "$G.example" "$G"
+              sed -i \
+                -e "s|^rpc_secret = .*|rpc_secret = \"$(openssl rand -hex 32)\"|" \
+                -e "s|^admin_token = .*|admin_token = \"$(openssl rand -base64 32)\"|" \
+                -e "s|^metrics_token = .*|metrics_token = \"$(openssl rand -base64 32)\"|" "$G"
+              echo "::warning::garage.prod.toml created from the example with generated secrets - set GARAGE_PROD_TOML for real root_domain values"
+            fi
+            chmod 600 .env "$G"
+
+            # First run on a fresh VPS: install Docker (+ compose plugin).
+            if ! command -v docker >/dev/null 2>&1; then
+              curl -fsSL https://get.docker.com | sudo sh
+              sudo usermod -aG docker "$(id -un)"
+            fi
+            # The docker group isn't active in this session yet on first run.
+            if docker info >/dev/null 2>&1; then DOCKER="docker"; else DOCKER="sudo docker"; fi
+            COMPOSE="$DOCKER compose -f docker-compose.prod.yml"
+
+            # Short-lived token of this workflow run: no PAT stored on the VPS.
+            echo "$GHCR_TOKEN" | $DOCKER login ghcr.io -u "$GHCR_USER" --password-stdin
+
+            # Retry pulls: layer downloads occasionally get connection resets.
+            n=0
+            until $COMPOSE pull; do
+              n=$((n+1)); [ "$n" -ge 4 ] && { echo "pull failed after $n attempts"; exit 1; }
+              echo "pull failed, retry $n/3..."; sleep 5
+            done
+
+            $COMPOSE up -d postgres garage
+            $COMPOSE up -d --force-recreate --no-deps api web
+
+            # Idempotent: enables public website access on the Garage bucket.
+            BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | cut -d= -f2- || true)"
+            n=0
+            until $COMPOSE exec -T garage /garage bucket website --allow --index-document index.html "${BUCKET:-media}"; do
+              n=$((n+1)); [ "$n" -ge 10 ] && { echo "garage bucket setup failed"; exit 1; }
+              sleep 3
+            done
+
+            $DOCKER logout ghcr.io
+            $DOCKER image prune -f
+            $COMPOSE ps
