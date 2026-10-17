@@ -177,11 +177,28 @@ jobs:
             $COMPOSE up -d --force-recreate --no-deps garage
             $COMPOSE up -d --force-recreate --no-deps api web
 
-            # Idempotent: enables public website access on the Garage bucket.
+            # Idempotent: make sure the bucket has a GLOBAL alias (the default
+            # bucket may only carry a key-local one) and enable public website
+            # access on it. Retries while Garage finishes starting up.
             BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | cut -d= -f2- || true)"
+            BUCKET="${BUCKET:-media}"
+            GARAGE="$COMPOSE exec -T garage /garage"
             n=0
-            until $COMPOSE exec -T garage /garage bucket website --allow --index-document index.html "${BUCKET:-media}"; do
-              n=$((n+1)); [ "$n" -ge 10 ] && { echo "garage bucket setup failed"; $COMPOSE ps -a; $COMPOSE logs --tail 60 garage; ls -la infra/garage; exit 1; }
+            while :; do
+              BID="$($GARAGE bucket list 2>/dev/null | awk -v b="$BUCKET" 'index($0, b) { print $1; exit }')"
+              if [ -n "$BID" ]; then
+                $GARAGE bucket alias "$BID" "$BUCKET" >/dev/null 2>&1 || true
+                $GARAGE bucket website --allow --index-document index.html "$BUCKET" && break
+              fi
+              n=$((n+1))
+              if [ "$n" -ge 10 ]; then
+                echo "garage bucket setup failed"
+                $COMPOSE ps -a
+                $GARAGE bucket list || true
+                $GARAGE key list || true
+                $COMPOSE logs --tail 40 garage
+                exit 1
+              fi
               sleep 3
             done
 
