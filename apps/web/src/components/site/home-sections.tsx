@@ -104,15 +104,6 @@ export function HomeSpace({ config }: { config: HomeSettings["space"] }) {
 
   return (
     <section className="relative isolate overflow-hidden">
-      <svg
-        className="absolute top-0 left-0 z-10 w-full text-[#f3e9dc]"
-        viewBox="0 0 1440 80"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <path fill="currentColor" d="M0 0h1440v32c-240 32-480 48-720 48S240 64 0 32V0Z" />
-      </svg>
-
       <div
         className="relative flex min-h-[560px] items-center md:min-h-[85vh] justify-center bg-cover bg-center bg-scroll text-center md:bg-fixed"
         style={{
@@ -123,7 +114,7 @@ export function HomeSpace({ config }: { config: HomeSettings["space"] }) {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/55" />
-        <Reveal className="relative z-10 px-4 py-40">
+        <Reveal className="relative z-10 px-4 py-24">
           {config.title && (
             <h2
               className="text-4xl font-bold tracking-tight text-white sm:text-6xl"
@@ -139,15 +130,6 @@ export function HomeSpace({ config }: { config: HomeSettings["space"] }) {
           )}
         </Reveal>
       </div>
-
-      <svg
-        className="absolute bottom-0 left-0 z-10 w-full text-[#f3e9dc]"
-        viewBox="0 0 1440 80"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <path fill="currentColor" d="M0 80h1440V48c-240-32-480-48-720-48S240 16 0 48v32Z" />
-      </svg>
     </section>
   );
 }
