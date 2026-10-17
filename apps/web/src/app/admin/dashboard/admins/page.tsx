@@ -2,7 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { KeyRound, Lock, Plus, ShieldCheck, Users } from "lucide-react";
+import { KeyRound, Lock, LockOpen, Plus, ShieldCheck, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DataTable } from "@/components/data-table/data-table";
@@ -13,13 +14,22 @@ import { DeleteButton } from "@/components/common/confirm-dialog";
 import {
   useAdminsQuery,
   useDeactivateAdmin,
+  useUnlockAdmin,
   type AdminAccount,
 } from "@/hooks/use-admins";
-import { initials } from "@/lib/format";
+import { useCurrentAdmin } from "@/hooks/use-auth";
+import { ADMIN_ROLE_LABELS, AdminRole } from "@/lib/constants";
+import { formatDateTime, initials } from "@/lib/format";
+
+/** Login is temporarily blocked after too many wrong passwords. */
+const isLoginLocked = (a: AdminAccount) =>
+  !!a.lockedUntil && new Date(a.lockedUntil).getTime() > Date.now();
 
 export default function AdminsPage() {
   const { data, isLoading } = useAdminsQuery();
   const deactivateAdmin = useDeactivateAdmin();
+  const unlockAdmin = useUnlockAdmin();
+  const { data: me } = useCurrentAdmin();
 
   const all = data ?? [];
   const activeCount = all.filter((a) => a.isActive).length;
@@ -52,10 +62,16 @@ export default function AdminsPage() {
       id: "role",
       meta: { hideBelow: "sm" },
       header: "Vai trò",
-      cell: () => (
+      cell: ({ row }) => (
         <span className="inline-flex items-center gap-1.5 text-[13px]">
-          <ShieldCheck className="size-3.5 text-amber-600" />
-          Quản trị viên
+          <ShieldCheck
+            className={
+              row.original.role === AdminRole.ADMIN
+                ? "size-3.5 text-amber-600"
+                : "size-3.5 text-muted-foreground"
+            }
+          />
+          {ADMIN_ROLE_LABELS[row.original.role]}
         </span>
       ),
     },
@@ -64,9 +80,16 @@ export default function AdminsPage() {
       meta: { hideBelow: "md" },
       header: "Trạng thái",
       cell: ({ row }) => (
-        <StatusBadge tone={row.original.isActive ? "success" : "danger"}>
-          {row.original.isActive ? "Hoạt động" : "Đã khoá"}
-        </StatusBadge>
+        <div className="flex flex-col items-start gap-1">
+          <StatusBadge tone={row.original.isActive ? "success" : "danger"}>
+            {row.original.isActive ? "Hoạt động" : "Đã khoá"}
+          </StatusBadge>
+          {row.original.isActive && isLoginLocked(row.original) && (
+            <StatusBadge tone="warning">
+              Tạm khoá đến {formatDateTime(row.original.lockedUntil)}
+            </StatusBadge>
+          )}
+        </div>
       ),
     },
     {
@@ -74,6 +97,25 @@ export default function AdminsPage() {
       header: "",
       cell: ({ row }) => (
         <RowActions>
+          {row.original.isActive && isLoginLocked(row.original) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-amber-700 hover:text-amber-800"
+              disabled={unlockAdmin.isPending}
+              onClick={async () => {
+                try {
+                  await unlockAdmin.mutateAsync(row.original.id);
+                  toast.success("Đã mở khoá đăng nhập");
+                } catch {
+                  toast.error("Thao tác thất bại");
+                }
+              }}
+            >
+              <LockOpen />
+              Mở khoá
+            </Button>
+          )}
           <LinkButton
             href={`/admin/dashboard/admins/form/?id=${row.original.id}`}
             variant="ghost"
@@ -83,7 +125,9 @@ export default function AdminsPage() {
             <KeyRound />
             Đổi mật khẩu
           </LinkButton>
-          {row.original.isActive && (
+          {row.original.isActive &&
+            row.original.role === AdminRole.EMPLOYEE &&
+            row.original.id !== me?.id && (
             <DeleteButton
               itemLabel={row.original.email}
               title="Khoá tài khoản?"

@@ -12,7 +12,7 @@ async function seed() {
 
   const existing = await adminsRepo.findOne({ where: { email } });
   if (existing) {
-    console.log(`Admin ${email} already exists, skipping.`);
+    await adminsRepo.delete(existing.id);
   } else {
     const passwordHash = await bcrypt.hash(password, 10);
     const admin = adminsRepo.create({ email, passwordHash, fullName });
