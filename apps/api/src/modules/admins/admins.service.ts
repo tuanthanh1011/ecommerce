@@ -29,6 +29,11 @@ export class AdminsService {
   }
 
   async create(dto: CreateAdminDto): Promise<Partial<Admin>> {
+    // There is exactly one Admin (created by the seed); everyone else is an
+    // Employee. A lost Admin is recovered with the reset-admin script.
+    if (dto.role === AdminRole.ADMIN) {
+      throw new ForbiddenException('Only one Admin account is allowed');
+    }
     const existing = await this.adminsRepo.findOne({
       where: { email: dto.email },
     });
@@ -39,7 +44,7 @@ export class AdminsService {
       email: dto.email,
       fullName: dto.fullName,
       passwordHash,
-      role: dto.role ?? AdminRole.ADMIN,
+      role: AdminRole.EMPLOYEE,
     });
     await this.adminsRepo.save(admin);
     return toPublicAdmin(admin);
@@ -59,7 +64,14 @@ export class AdminsService {
         'You cannot change your own role or deactivate your own account',
       );
     }
+    if (dto.role === AdminRole.ADMIN && admin.role !== AdminRole.ADMIN) {
+      throw new ForbiddenException('Only one Admin account is allowed');
+    }
     if (dto.isActive === false) this.assertCanDeactivate(admin);
+    if (dto.isActive === true) {
+      admin.failedLoginAttempts = 0;
+      admin.lockedUntil = null;
+    }
     Object.assign(admin, dto);
     await this.adminsRepo.save(admin);
     return toPublicAdmin(admin);

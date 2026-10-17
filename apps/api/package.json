@@ -14,6 +14,7 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "seed": "ts-node -r tsconfig-paths/register src/database/seed.ts",
+    "reset-admin": "ts-node -r tsconfig-paths/register src/database/reset-admin.ts",
     "seed:demo": "ts-node -r tsconfig-paths/register src/database/seed-demo.ts"
   },
   "dependencies": {

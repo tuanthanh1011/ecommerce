@@ -54,6 +54,15 @@ export function useDeactivateAdmin() {
   });
 }
 
+export function useActivateAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiClient.patch<AdminAccount>(`/admin/admins/${id}`, { isActive: true }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [KEY] }),
+  });
+}
+
 export function useUnlockAdmin() {
   const queryClient = useQueryClient();
   return useMutation({
