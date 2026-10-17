@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   DeleteObjectCommand,
+  PutBucketCorsCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -23,11 +24,46 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
  * goes straight to Garage's website endpoint (see getPublicUrl / README).
  */
 @Injectable()
-export class StorageService {
+export class StorageService implements OnModuleInit {
+  private readonly logger = new Logger(StorageService.name);
   private readonly internalClient: S3Client;
   private readonly presignClient: S3Client;
   private readonly bucket: string;
   private readonly publicBaseUrl: string;
+
+  /**
+   * The admin browser PUTs straight to Garage (a different origin than the
+   * CMS), so the bucket needs a CORS policy or the preflight is rejected.
+   * Garage has no CLI for this — it is only settable through the S3 API.
+   * Applied on every start; a failure must not stop the API from booting.
+   */
+  async onModuleInit(): Promise<void> {
+    const origins = (this.configService.get<string>('CORS_ORIGIN') ?? '*')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    try {
+      await this.internalClient.send(
+        new PutBucketCorsCommand({
+          Bucket: this.bucket,
+          CORSConfiguration: {
+            CORSRules: [
+              {
+                AllowedOrigins: origins,
+                AllowedMethods: ['PUT', 'GET', 'HEAD'],
+                AllowedHeaders: ['*'],
+                ExposeHeaders: ['ETag'],
+                MaxAgeSeconds: 3600,
+              },
+            ],
+          },
+        }),
+      );
+      this.logger.log(`Garage bucket CORS set for: ${origins.join(', ')}`);
+    } catch (err) {
+      this.logger.warn(`Could not set Garage bucket CORS: ${String(err)}`);
+    }
+  }
 
   constructor(private configService: ConfigService) {
     const region = this.configService.get<string>('GARAGE_REGION') ?? 'garage';
