@@ -183,7 +183,7 @@ jobs:
             # Idempotent: make sure the bucket has a GLOBAL alias (the default
             # bucket may only carry a key-local one) and enable public website
             # access on it. Retries while Garage finishes starting up.
-            BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | cut -d= -f2- | tr -d '\r"' || true)"
+            BUCKET="$(grep -E '^GARAGE_BUCKET_NAME=' .env | tail -n1 | cut -d= -f2- | sed 's/[[:space:]]*#.*//' | tr -d '\r" ' || true)"
             BUCKET="${BUCKET:-media}"
             GARAGE="$COMPOSE exec -T garage /garage"
             n=0
@@ -195,7 +195,8 @@ jobs:
               fi
               n=$((n+1))
               if [ "$n" -ge 10 ]; then
-                echo "garage bucket setup failed"
+                echo "garage bucket setup failed (BUCKET=[$BUCKET] BID=[$BID])"
+                grep -n '^GARAGE_BUCKET_NAME' .env || true
                 $COMPOSE ps -a
                 $GARAGE bucket list || true
                 $GARAGE key list || true
