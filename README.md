@@ -116,10 +116,9 @@ Cơ chế chặn nằm ở `RolesGuard` (`common/guards/roles.guard.ts`): (1) m�
 [Garage](https://garagehq.deuxfleurs.fr) là object storage S3-compatible, self-host (AGPL-3.0). Cloudflare R2 chỉ dùng để backup.
 
 - Service `garage` trong compose, cấu hình `infra/garage/garage.toml` (dev) / `garage.prod.toml` (prod) — copy từ `.example` và điền secret thật (`openssl rand -base64 32`); 2 file thật đã gitignore.
-- Luồng upload: CMS xin presigned PUT URL (`POST /admin/media/presign`) → trình duyệt PUT thẳng lên Garage → ghi record (`POST /admin/media`). API không stream file nào.
-- `StorageService` dùng **2 S3Client** (cố ý): 1 trỏ endpoint nội bộ Docker (xoá file), 1 trỏ endpoint public (ký presigned URL — chữ ký SigV4 gồm cả Host header nên phải ký đúng host mà trình duyệt gọi).
-- Giới hạn upload: `MAX_UPLOAD_SIZE_BYTES` (mặc định 15 MB) kiểm tra ở `MediaService.presign()` — lớp chặn thật sự duy nhất, vì presigned PUT không tự ràng buộc kích thước body. Production nên đặt reverse proxy trước cổng S3 (3900) với giới hạn body.
-- Production cần domain + TLS thật trỏ vào Garage (S3 API và website endpoint) — xem comment trong `garage.prod.toml.example`.
+- Luồng upload: CMS gửi file (multipart) tới `POST /admin/media/upload` → API ghi vào Garage qua mạng nội bộ Docker và lưu record. Đọc file công khai qua `GET /public/media/:key` (API stream từ Garage, cache 1 năm). Garage **không** mở port ra ngoài, không cần CORS hay domain riêng.
+- `GARAGE_PUBLIC_BASE_URL` là URL gốc lưu vào `Media.url`, trỏ tới route media của chính API, ví dụ `http://<host>:3001/public/media`.
+- Giới hạn upload: `MAX_UPLOAD_SIZE_BYTES` (mặc định 15 MB) kiểm tra ở `MediaService.upload()`; file được giữ trong RAM của API trong lúc ghi nên đừng đặt giới hạn quá lớn.
 
 ## Backup tự động → Cloudflare R2
 
@@ -134,7 +133,7 @@ Ghi vào `backups/<timestamp>/db.sql.gz` và `backups/<timestamp>/media/...` tr�
 ## Request log & Rate limiting
 
 - **Request log**: mọi request (trừ `OPTIONS`) ghi vào `request_logs` (method, path, query, status, thời gian xử lý, IP, user-agent, referer, admin + role, content-length) — fire-and-forget sau khi response đã trả, không làm chậm request. Tự dọn log cũ hơn `REQUEST_LOG_RETENTION_DAYS` (mặc định 30) lúc 4h sáng. Xem `GET /admin/request-logs` (Admin-only; lọc `path`/`isError`/`adminId`).
-- **Rate limit**: `@nestjs/throttler`, `RATE_LIMIT_MAX` request / `RATE_LIMIT_TTL_SECONDS` giây (120/60s) theo IP; chặt hơn riêng cho `/auth/login` (10/phút) và `/admin/media/presign` (30/phút).
+- **Rate limit**: `@nestjs/throttler`, `RATE_LIMIT_MAX` request / `RATE_LIMIT_TTL_SECONDS` giây (120/60s) theo IP; chặt hơn riêng cho `/auth/login` (10/phút) và `/admin/media/upload` (30/phút).
 
 ## Deploy production (GitHub Actions → VPS)
 
@@ -149,7 +148,7 @@ Ghi vào `backups/<timestamp>/db.sql.gz` và `backups/<timestamp>/media/...` tr�
    - Nếu để trống và VPS chưa có file, workflow tự copy từ `.env.example` / `garage.prod.toml.example` và **sinh sẵn** JWT secrets, key Garage, rpc/admin token. Các giá trị khác (CORS_ORIGIN, R2_*, SEED_ADMIN_*, domain Garage) vẫn là giá trị mẫu — nên đặt secret thật hoặc sửa file trên VPS. File đã có trên VPS không bị ghi đè.
    - Đặt từ file: `gh secret set ENV_FILE < .env` (PowerShell: `Get-Content .env -Raw | gh secret set ENV_FILE`).
 2. **Variables**: `NEXT_PUBLIC_API_BASE_URL` — URL public của API (vd. `https://api.yourdomain.com`), build cứng vào `web`.
-3. Security Group / firewall của VPS: mở 22, 80 và (nếu trình duyệt gọi trực tiếp) 3001, 3900, 3902.
+3. Security Group / firewall của VPS: mở 22, 80 và 3001 (API). Không cần mở 3900/3902 (Garage chỉ dùng nội bộ).
 4. Tạo admin đầu tiên (một lần, chạy từ máy có `DATABASE_URL` trỏ tới DB production): `npm run seed`.
 
 ### Khôi phục tài khoản Quản trị viên

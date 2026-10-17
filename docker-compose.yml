@@ -28,9 +28,8 @@ services:
       - ./infra/garage/garage.toml:/etc/garage.toml:ro
       - garage_meta:/var/lib/garage/meta
       - garage_data:/var/lib/garage/data
-    ports:
-      - '3900:3900' # S3 API — presigned PUT uploads go straight here from the browser
-      - '3902:3902' # public website endpoint — serves uploaded files (GET only)
+    # No published ports: Garage is only reached by the api over the compose
+    # network (uploads and public file reads both go through the API).
     healthcheck:
       test: ['CMD', '/garage', 'status']
       interval: 10s

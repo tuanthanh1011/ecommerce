@@ -1,114 +1,84 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   DeleteObjectCommand,
-  PutBucketCorsCommand,
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { Readable } from 'node:stream';
 
 /**
- * S3-compatible client for the self-hosted Garage cluster (replaces the old
- * direct-to-Cloudflare-R2 flow — R2 is now backup-only, see the backups
- * module). Two separate S3Client instances are deliberate, not an oversight:
- *
- * - `internalClient` talks to Garage over the Docker network (`garage:3900`)
- *   for everything the API server does on its own (delete on removal).
- * - `presignClient` is configured with the PUBLIC endpoint (what the admin's
- *   *browser* can actually reach — localhost in dev, a real (sub)domain in
- *   prod) because an S3 presigned URL's signature covers the Host header, so
- *   it must be signed with the host the browser will actually hit.
- *
- * Public GET of uploaded files does not go through this service at all — it
- * goes straight to Garage's website endpoint (see getPublicUrl / README).
+ * S3-compatible client for the self-hosted Garage (R2 is backup-only, see the
+ * backups module). Garage is only reachable over the Docker network
+ * (`garage:3900`): uploads go browser -> API -> Garage and public reads go
+ * Garage -> API -> browser (see MediaController), so Garage needs no public
+ * port, CORS policy or domain.
  */
 @Injectable()
-export class StorageService implements OnModuleInit {
-  private readonly logger = new Logger(StorageService.name);
-  private readonly internalClient: S3Client;
-  private readonly presignClient: S3Client;
+export class StorageService {
+  private readonly client: S3Client;
   private readonly bucket: string;
   private readonly publicBaseUrl: string;
 
-  /**
-   * The admin browser PUTs straight to Garage (a different origin than the
-   * CMS), so the bucket needs a CORS policy or the preflight is rejected.
-   * Garage has no CLI for this — it is only settable through the S3 API.
-   * Applied on every start; a failure must not stop the API from booting.
-   */
-  async onModuleInit(): Promise<void> {
-    const origins = (this.configService.get<string>('CORS_ORIGIN') ?? '*')
-      .split(',')
-      .map((o) => o.trim())
-      .filter(Boolean);
-    try {
-      await this.internalClient.send(
-        new PutBucketCorsCommand({
-          Bucket: this.bucket,
-          CORSConfiguration: {
-            CORSRules: [
-              {
-                AllowedOrigins: origins,
-                AllowedMethods: ['PUT', 'GET', 'HEAD'],
-                AllowedHeaders: ['*'],
-                ExposeHeaders: ['ETag'],
-                MaxAgeSeconds: 3600,
-              },
-            ],
-          },
-        }),
-      );
-      this.logger.log(`Garage bucket CORS set for: ${origins.join(', ')}`);
-    } catch (err) {
-      this.logger.warn(`Could not set Garage bucket CORS: ${String(err)}`);
-    }
-  }
-
   constructor(private configService: ConfigService) {
-    const region = this.configService.get<string>('GARAGE_REGION') ?? 'garage';
-    const accessKeyId = this.configService.get<string>('GARAGE_ACCESS_KEY_ID')!;
-    const secretAccessKey = this.configService.get<string>(
-      'GARAGE_SECRET_ACCESS_KEY',
-    )!;
     this.bucket = this.configService.get<string>('GARAGE_BUCKET_NAME')!;
     this.publicBaseUrl = this.configService
       .get<string>('GARAGE_PUBLIC_BASE_URL')!
       .replace(/\/$/, '');
 
-    const credentials = { accessKeyId, secretAccessKey };
-    // Garage is S3-compatible but path-style only needs `forcePathStyle`
-    // since we don't rely on its vhost-style S3 API addressing.
-    this.internalClient = new S3Client({
-      region,
+    this.client = new S3Client({
+      region: this.configService.get<string>('GARAGE_REGION') ?? 'garage',
       endpoint: this.configService.get<string>('GARAGE_INTERNAL_ENDPOINT'),
+      // Garage is S3-compatible but only supports path-style addressing here.
       forcePathStyle: true,
-      credentials,
-    });
-    this.presignClient = new S3Client({
-      region,
-      endpoint: this.configService.get<string>('GARAGE_PUBLIC_ENDPOINT'),
-      forcePathStyle: true,
-      credentials,
+      credentials: {
+        accessKeyId: this.configService.get<string>('GARAGE_ACCESS_KEY_ID')!,
+        secretAccessKey: this.configService.get<string>(
+          'GARAGE_SECRET_ACCESS_KEY',
+        )!,
+      },
     });
   }
 
-  async getPresignedUploadUrl(key: string, mimeType: string): Promise<string> {
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      ContentType: mimeType,
-    });
-    return getSignedUrl(this.presignClient, command, { expiresIn: 300 });
+  async putObject(key: string, body: Buffer, mimeType: string): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: mimeType,
+        ContentLength: body.length,
+      }),
+    );
   }
 
-  /** Served by Garage's website endpoint, not the S3 API — see README. */
+  /** Returns null when the object does not exist. */
+  async getObject(
+    key: string,
+  ): Promise<{ body: Readable; contentType?: string; size?: number } | null> {
+    try {
+      const res = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      return {
+        body: res.Body as Readable,
+        contentType: res.ContentType,
+        size: res.ContentLength,
+      };
+    } catch (err) {
+      if ((err as { name?: string }).name === 'NoSuchKey') return null;
+      throw err;
+    }
+  }
+
+  /** `GARAGE_PUBLIC_BASE_URL` is the API's own public media route. */
   getPublicUrl(key: string): string {
     return `${this.publicBaseUrl}/${key}`;
   }
 
   async deleteObject(key: string): Promise<void> {
-    await this.internalClient.send(
+    await this.client.send(
       new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
     );
   }

@@ -20,10 +20,8 @@ export const envValidationSchema = Joi.object({
   GARAGE_BUCKET_NAME: Joi.string().required(),
   // Docker-network address, used for server-to-server calls (delete, backup sync).
   GARAGE_INTERNAL_ENDPOINT: Joi.string().required(),
-  // Address the admin's *browser* can reach — must match what presigned PUT
-  // URLs are signed against (localhost in dev, a real domain in prod).
-  GARAGE_PUBLIC_ENDPOINT: Joi.string().required(),
-  // Garage's website endpoint base — what GET requests for uploaded files use.
+  // Base URL stored in Media.url: the API's own public media route, e.g.
+  // http://<host>:3001/public/media (the API streams the file from Garage).
   GARAGE_PUBLIC_BASE_URL: Joi.string().required(),
 
   // Cloudflare R2 — backup target only (see modules/backups). Not used for
@@ -46,9 +44,6 @@ export const envValidationSchema = Joi.object({
 
   REQUEST_LOG_RETENTION_DAYS: Joi.number().default(30),
 
-  // Advisory + enforced cap on `sizeBytes` declared at presign time (see
-  // MediaService.presign — presigned PUT alone can't bind the actual
-  // upload's byte size, so this is the authoritative check on the one
-  // legitimate path to obtain an upload URL). Default 15 MiB.
+  // Max size of one uploaded file, enforced by MediaService.upload. Default 15 MiB.
   MAX_UPLOAD_SIZE_BYTES: Joi.number().default(15 * 1024 * 1024),
 });

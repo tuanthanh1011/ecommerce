@@ -54,15 +54,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const { body, skipAuth, headers, ...rest } = options;
   const token = getAccessToken();
 
+  // FormData needs the browser to set the multipart Content-Type (with boundary).
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+
   const doFetch = () =>
     fetch(`${API_BASE_URL}${path}`, {
       ...rest,
       headers: {
-        "Content-Type": "application/json",
+        ...(isForm ? {} : { "Content-Type": "application/json" }),
         ...(token && !skipAuth ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body:
+        body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
     });
 
   let res = await doFetch();
