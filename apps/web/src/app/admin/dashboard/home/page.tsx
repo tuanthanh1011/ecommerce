@@ -269,18 +269,14 @@ function HomeEditor({ initial }: { initial: HomeSettings }) {
 
         {/* ── Các mục lấy từ tab khác ──────────────────────────── */}
         <FormSection
-          title="Các mục lấy dữ liệu từ tab khác"
-          description="Nội dung nhập ở các tab Sản phẩm, Cửa hàng, Tin tức, Tuyển dụng. Ở đây chỉ bật/tắt việc hiển thị ở trang chủ — mục nào chưa có dữ liệu sẽ tự ẩn."
+          title="Mục lấy dữ liệu từ tab khác"
+          description="Nội dung nhập ở tab Sản phẩm. Ở đây chỉ bật/tắt việc hiển thị ở trang chủ — chưa có dữ liệu thì mục tự ẩn. Cửa hàng, Tin tức, Cho đi, Tuyển dụng có trang riêng trên menu."
           icon={Layers}
           tone="teal"
         >
           {(
             [
               ["newProducts", "Sản phẩm mới", "Các sản phẩm được bật “Sản phẩm mới” ở tab Sản phẩm."],
-              ["stores", "Cửa hàng", "Các cửa hàng đang hoạt động."],
-              ["news", "Tin tức - Sự kiện", "Các bài viết đã xuất bản gần nhất (không gồm “Cho đi”)."],
-              ["giveBack", "Cho đi", "Các bài viết thuộc loại “Cho đi”."],
-              ["jobs", "Tuyển dụng", "Các vị trí đang mở."],
             ] as const
           ).map(([key, title, description]) => (
             <ToggleRow

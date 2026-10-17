@@ -145,8 +145,11 @@
   }
   html {
     @apply font-sans;
-    /* Always reserve the page scrollbar so content doesn't shift sideways
-       when a page grows taller than the viewport (e.g. after data loads). */
+  }
+  /* Public pages: always reserve the page scrollbar so content doesn't shift
+     sideways when a page grows taller than the viewport (e.g. after data
+     loads). Not for the CMS, whose app shell manages its own scrolling. */
+  html:has([data-public-site]) {
     overflow-y: scroll;
   }
   ::selection {

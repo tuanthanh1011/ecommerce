@@ -5,6 +5,7 @@ import { SiteFooter } from "./site-footer";
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <div
+      data-public-site
       className="flex min-h-screen flex-col bg-[#f3e9dc] text-stone-900"
     >
       <SiteHeader />

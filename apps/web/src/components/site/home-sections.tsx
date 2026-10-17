@@ -114,7 +114,7 @@ export function HomeSpace({ config }: { config: HomeSettings["space"] }) {
       </svg>
 
       <div
-        className="relative flex min-h-[460px] items-center justify-center bg-cover bg-center bg-scroll text-center md:bg-fixed"
+        className="relative flex min-h-[560px] items-center md:min-h-[85vh] justify-center bg-cover bg-center bg-scroll text-center md:bg-fixed"
         style={{
           backgroundColor: MAROON,
           ...(config.imageUrl
@@ -123,7 +123,7 @@ export function HomeSpace({ config }: { config: HomeSettings["space"] }) {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/55" />
-        <Reveal className="relative z-10 px-4 py-28">
+        <Reveal className="relative z-10 px-4 py-40">
           {config.title && (
             <h2
               className="text-4xl font-bold tracking-tight text-white sm:text-6xl"
