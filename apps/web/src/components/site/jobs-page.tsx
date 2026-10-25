@@ -96,7 +96,7 @@ function JobDetailInner() {
                   {heading}
                 </h2>
                 <div className="mt-2 h-px w-16" style={{ backgroundColor: MAROON }} />
-                <p className="mt-5 leading-loose whitespace-pre-line text-stone-700">{body}</p>
+                <p className="mt-5 leading-loose whitespace-pre-line text-stone-950 font-body">{body}</p>
               </div>
             ))}
           </div>

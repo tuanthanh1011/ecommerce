@@ -4,9 +4,13 @@ export enum ProductCategory {
 }
 
 export enum DrinkSubType {
-  HOT = 'HOT',
-  ICED = 'ICED',
-  FRESH = 'FRESH',
+  MILK_TEA = 'MILK_TEA',
+  NEW = 'NEW',
+  TEA = 'TEA',
+  SPECIAL = 'SPECIAL',
+  COFFEE = 'COFFEE',
+  FRUIT = 'FRUIT',
+  TOPPING = 'TOPPING',
 }
 
 export enum MerchandiseSubType {
@@ -38,12 +42,6 @@ export enum JobStatus {
 export enum TeamMemberGroup {
   CORE_TEAM = 'CORE_TEAM',
   ADVISORY_BOARD = 'ADVISORY_BOARD',
-}
-
-export enum DocumentCategory {
-  WORKFLOW = 'WORKFLOW',
-  RECIPE = 'RECIPE',
-  QUALITY_STANDARD = 'QUALITY_STANDARD',
 }
 
 export enum MediaType {

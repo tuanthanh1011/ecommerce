@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOperator, ILike, In, Not, Repository } from 'typeorm';
+import { FindOperator, ILike, Not, Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -43,13 +43,7 @@ export class PostsService {
       typeCondition =
         query.type && query.type !== PostType.INTERNAL_UPDATE
           ? query.type
-          : Not(
-              In(
-                query.excludeType
-                  ? [PostType.INTERNAL_UPDATE, query.excludeType]
-                  : [PostType.INTERNAL_UPDATE],
-              ),
-            );
+          : Not(PostType.INTERNAL_UPDATE);
     } else {
       typeCondition = query.type;
     }

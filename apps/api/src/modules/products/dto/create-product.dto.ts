@@ -53,4 +53,9 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isNew?: boolean;
+
+  @ApiPropertyOptional({ description: 'Hiển thị ở mục "Best Seller"' })
+  @IsOptional()
+  @IsBoolean()
+  isBestSeller?: boolean;
 }

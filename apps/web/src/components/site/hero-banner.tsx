@@ -82,7 +82,7 @@ export function HeroBanner({
           <h1
             className={
               headingClassName ??
-              "text-5xl font-semibold tracking-tight text-white sm:text-6xl"
+              "text-5xl tracking-wide text-white uppercase sm:text-6xl"
             }
             style={headingStyle}
           >
@@ -98,7 +98,7 @@ export function HeroBanner({
           <div className="mt-8 flex justify-center">
             <a
               href="#story"
-              className="group inline-flex h-11 items-center gap-2 rounded-full border border-white/70 px-6 text-sm font-medium text-white transition-all hover:bg-white hover:text-[#960000]"
+              className="font-body group inline-flex h-11 items-center gap-2 rounded-full border border-white/70 px-6 text-sm text-white uppercase transition-all hover:bg-white hover:text-[#960000]"
             >
               {ctaLabel}
               <ChevronDown className="size-4 transition-transform group-hover:translate-y-0.5" />

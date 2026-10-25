@@ -28,10 +28,6 @@ export interface HomeSettings {
   /** On/off switches for sections whose content comes from other CMS tabs. */
   sections: {
     newProducts: boolean;
-    stores: boolean;
-    news: boolean;
-    giveBack: boolean;
-    jobs: boolean;
   };
 }
 
@@ -59,13 +55,7 @@ export const DEFAULT_HOME_SETTINGS: HomeSettings = {
     tagline: 'Học Tập · Làm Việc · Kết Nối · Thư Giãn',
     imageUrl: '/images/home/khong-gian-bg.jpg',
   },
-  sections: {
-    newProducts: true,
-    stores: true,
-    news: true,
-    giveBack: true,
-    jobs: true,
-  },
+  sections: { newProducts: true },
 };
 
 const MAX_SLIDES = 8;
@@ -125,10 +115,6 @@ export function sanitizeHomeSettings(input: unknown): HomeSettings {
     },
     sections: {
       newProducts: bool(sections.newProducts, true),
-      stores: bool(sections.stores, true),
-      news: bool(sections.news, true),
-      giveBack: bool(sections.giveBack, true),
-      jobs: bool(sections.jobs, true),
     },
   };
 }

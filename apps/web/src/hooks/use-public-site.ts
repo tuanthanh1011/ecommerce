@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { Paginated, Store } from "@/hooks/use-stores";
+import type { Paginated } from "@/hooks/pagination";
 import type { Post } from "@/hooks/use-posts";
 import type { Job } from "@/hooks/use-jobs";
 import type { Product } from "@/hooks/use-products";
@@ -51,35 +51,19 @@ export function usePublicContact() {
   );
 }
 
-// ── Stores ────────────────────────────────────────────────────────────────
-export function usePublicStores(limit = 12) {
-  return useQuery(
-    publicQuery<Paginated<Store>>(["stores", limit], `/public/stores${qs({ limit })}`),
-  );
-}
-
-export function usePublicStore(id: string | undefined) {
-  return useQuery({
-    ...publicQuery<Store>(["store", id], `/public/stores/${id}`, !!id),
-    retry: false,
-  });
-}
-
 // ── Posts ─────────────────────────────────────────────────────────────────
 export interface PostsFilter {
   limit?: number;
   page?: number;
   type?: PostType;
-  /** Leave one type out, e.g. keep "Cho đi" posts out of the news list. */
-  excludeType?: PostType;
 }
 
 export function usePublicPosts(filter: PostsFilter = {}) {
-  const { limit = 9, page = 1, type, excludeType } = filter;
+  const { limit = 9, page = 1, type } = filter;
   return useQuery(
     publicQuery<Paginated<Post>>(
-      ["posts", limit, page, type ?? "all", excludeType ?? "none"],
-      `/public/posts${qs({ limit, page, type, excludeType })}`,
+      ["posts", limit, page, type ?? "all"],
+      `/public/posts${qs({ limit, page, type })}`,
     ),
   );
 }
@@ -120,6 +104,7 @@ export interface ProductsFilter {
   drinkSubType?: DrinkSubType;
   merchandiseSubType?: MerchandiseSubType;
   isNew?: boolean;
+  isBestSeller?: boolean;
 }
 
 export function usePublicProducts(filter: ProductsFilter = {}) {

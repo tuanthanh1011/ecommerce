@@ -1,9 +1,42 @@
-import { Playfair_Display } from "next/font/google";
+import { Alatsi, Noto_Sans, Noto_Serif_Display, Roboto } from "next/font/google";
 
-// Display serif for headings — scoped to the public website and to the CMS
-// previews of it (the admin CMS keeps Be Vietnam Pro everywhere else).
-export const displayFont = Playfair_Display({
+/**
+ * Typography of the S+ Coffee Canva design (fonts read from the exported
+ * design), used on the public website and in the CMS previews of it. The
+ * admin CMS keeps Be Vietnam Pro for its own UI.
+ *
+ * - Alatsi: logo, menu, headings and most text
+ * - Noto Serif Display: paragraphs and the spaced taglines
+ * - Roboto: the "Đăng Nhập" / account button
+ * - Noto Sans (bold): the big "Không Gian" title
+ */
+export const displayFont = Alatsi({
   variable: "--font-display",
-  subsets: ["latin", "vietnamese"],
-  weight: ["600", "700"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
+  weight: "400",
 });
+
+export const bodyFont = Noto_Serif_Display({
+  variable: "--font-body-serif",
+  subsets: ["latin", "latin-ext", "vietnamese"],
+});
+
+export const uiFont = Roboto({
+  variable: "--font-ui",
+  subsets: ["latin", "latin-ext", "vietnamese"],
+  weight: ["400", "500"],
+});
+
+export const titleFont = Noto_Sans({
+  variable: "--font-title",
+  subsets: ["latin", "latin-ext", "vietnamese"],
+  weight: "700",
+});
+
+/** className that exposes every font variable above. */
+export const fontVariables = [
+  displayFont.variable,
+  bodyFont.variable,
+  uiFont.variable,
+  titleFont.variable,
+].join(" ");

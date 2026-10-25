@@ -16,7 +16,7 @@ import {
   Lock,
   Mail,
   Newspaper,
-  Store,
+  Coffee,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,11 @@ export default function LoginPage() {
       // A previous account's cached profile/role must not survive a re-login.
       queryClient.removeQueries({ queryKey: ["auth", "me"] });
       toast.success("Đăng nhập thành công");
-      router.replace(homeHrefForRole(data.admin.role));
+      // Back to the page that asked for the sign-in (e.g. /internal/...), else
+      // the role's own home: staff → Nội bộ, admins → the CMS dashboard.
+      const next = new URLSearchParams(window.location.search).get("next");
+      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+      router.replace(safeNext ?? homeHrefForRole(data.admin.role));
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : "Đăng nhập thất bại";
@@ -92,11 +96,11 @@ export default function LoginPage() {
             Mỗi câu chuyện S+ bắt đầu từ một tách cà phê.
           </h1>
           <p className="mt-4 text-[15px] leading-relaxed text-stone-300">
-            Quản lý cửa hàng, thực đơn, tin tức và tài liệu nội bộ — tất cả ở một nơi.
+            Quản lý sản phẩm, tin tức, tuyển dụng và tài liệu nội bộ — tất cả ở một nơi.
           </p>
           <div className="mt-8 grid grid-cols-3 gap-3">
             {[
-              { icon: Store, label: "Cửa hàng" },
+              { icon: Coffee, label: "Sản phẩm" },
               { icon: Newspaper, label: "Tin tức" },
               { icon: FileText, label: "Tài liệu" },
             ].map(({ icon: Icon, label }) => (

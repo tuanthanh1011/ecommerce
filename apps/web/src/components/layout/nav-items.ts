@@ -1,16 +1,13 @@
 import {
   LayoutDashboard,
   BookOpen,
-  Store,
   Coffee,
   Newspaper,
   Briefcase,
   Images,
-  FileText,
-  Megaphone,
-  CalendarDays,
   Users,
   Phone,
+  ScrollText,
   House,
   type LucideIcon,
 } from "lucide-react";
@@ -29,15 +26,11 @@ export interface NavItem {
 export interface NavGroup {
   title: string;
   items: NavItem[];
-  /** Omit for both roles. Employee is scoped to "Nội bộ" content only. */
-  roles?: AdminRole[];
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Tổng quan",
-    // The dashboard is Admin-only: Employees are read-only and start in "Nội bộ".
-    roles: [AdminRole.ADMIN],
     items: [
       {
         label: "Dashboard",
@@ -50,7 +43,6 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "Nội dung công khai",
-    roles: [AdminRole.ADMIN],
     items: [
       {
         label: "Trang chủ",
@@ -65,13 +57,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: BookOpen,
         tone: "orange",
         description: "Hướng đi, văn hoá và đội ngũ S+",
-      },
-      {
-        label: "Cửa hàng",
-        href: "/admin/dashboard/stores",
-        icon: Store,
-        tone: "emerald",
-        description: "Hệ thống cửa hàng hiển thị trên website",
       },
       {
         label: "Sản phẩm",
@@ -114,31 +99,16 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Nội bộ",
     items: [
       {
-        label: "Tài liệu & vận hành",
-        href: "/admin/dashboard/internal/documents",
-        icon: FileText,
-        tone: "indigo",
-        description: "Quy trình, công thức và tiêu chuẩn chất lượng",
-      },
-      {
-        label: "Thông báo nội bộ",
-        href: "/admin/dashboard/internal/announcements",
-        icon: Megaphone,
-        tone: "pink",
-        description: "Thông tin gửi tới toàn bộ nhân sự",
-      },
-      {
-        label: "Lịch trình",
-        href: "/admin/dashboard/internal/schedule",
-        icon: CalendarDays,
-        tone: "teal",
-        description: "Sự kiện, họp và lịch làm việc chung",
+        label: "Trang Nội bộ",
+        href: "/admin/dashboard/internal-pages",
+        icon: ScrollText,
+        tone: "rose",
+        description: "Nội dung trang Thông Báo và Con người phù hợp trên website",
       },
     ],
   },
   {
     title: "Hệ thống",
-    roles: [AdminRole.ADMIN],
     items: [
       {
         label: "Tài khoản Admin",
@@ -168,12 +138,15 @@ export function findNavItemForPath(pathname: string | null): NavItem | undefined
     .find((i) => path === i.href || path.startsWith(`${i.href}/`));
 }
 
+/**
+ * The CMS is for Admins only. Employees are read-only and work in the
+ * website's "Nội bộ" area, so they get no CMS navigation at all.
+ */
 export function navGroupsForRole(role: AdminRole | undefined): NavGroup[] {
-  if (!role) return NAV_GROUPS;
-  return NAV_GROUPS.filter((g) => !g.roles || g.roles.includes(role));
+  if (!role || role === AdminRole.ADMIN) return NAV_GROUPS;
+  return [];
 }
 
-/** Longest-prefix match against the groups visible to this role. */
 export function isPathAllowedForRole(
   pathname: string | null,
   role: AdminRole | undefined,
@@ -186,6 +159,6 @@ export function isPathAllowedForRole(
 
 /** Where a role lands after login / when sent away from a page it can't open. */
 export function homeHrefForRole(role: AdminRole | undefined): string {
-  const first = navGroupsForRole(role)[0]?.items[0];
-  return first ? `${first.href}/` : "/admin/login/";
+  if (role === AdminRole.EMPLOYEE) return "/internal/notices/";
+  return `${NAV_GROUPS[0].items[0].href}/`;
 }

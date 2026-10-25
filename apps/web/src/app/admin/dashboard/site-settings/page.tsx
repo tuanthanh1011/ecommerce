@@ -29,6 +29,8 @@ const schema = z.object({
   openingHours: z.string().max(200, "Tối đa 200 ký tự"),
   facebookUrl: optionalUrl,
   instagramUrl: optionalUrl,
+  youtubeUrl: optionalUrl,
+  tiktokUrl: optionalUrl,
   chatUrl: optionalUrl,
 });
 
@@ -40,6 +42,8 @@ const EMPTY: Values = {
   openingHours: "",
   facebookUrl: "",
   instagramUrl: "",
+  youtubeUrl: "",
+  tiktokUrl: "",
   chatUrl: "",
 };
 
@@ -120,6 +124,12 @@ export default function SiteSettingsPage() {
                 </Field>
                 <Field label="Instagram" htmlFor="instagramUrl" error={errors.instagramUrl?.message}>
                   <Input id="instagramUrl" placeholder="https://instagram.com/..." {...register("instagramUrl")} />
+                </Field>
+                <Field label="YouTube" htmlFor="youtubeUrl" error={errors.youtubeUrl?.message}>
+                  <Input id="youtubeUrl" placeholder="https://youtube.com/@..." {...register("youtubeUrl")} />
+                </Field>
+                <Field label="TikTok" htmlFor="tiktokUrl" error={errors.tiktokUrl?.message}>
+                  <Input id="tiktokUrl" placeholder="https://tiktok.com/@..." {...register("tiktokUrl")} />
                 </Field>
                 <Field
                   label="Chat (Zalo, Messenger...)"

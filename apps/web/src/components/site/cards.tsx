@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Briefcase, MapPin, Newspaper, Phone, Store as StoreIcon } from "lucide-react";
+import { Briefcase, Newspaper } from "lucide-react";
 import type { Job } from "@/hooks/use-jobs";
 import type { Post } from "@/hooks/use-posts";
 import type { Product } from "@/hooks/use-products";
-import type { Store } from "@/hooks/use-stores";
 import {
   DRINK_SUB_TYPE_LABELS,
   MERCHANDISE_SUB_TYPE_LABELS,
@@ -66,38 +65,10 @@ export function PostCard({
         </span>
         <h3 className="mt-2 line-clamp-2 text-lg font-semibold text-stone-900">{post.title}</h3>
         {post.excerpt && (
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-600">{post.excerpt}</p>
+          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-800 font-body">{post.excerpt}</p>
         )}
         {post.publishedAt && (
           <time className="mt-auto pt-4 text-xs text-stone-500">{formatDate(post.publishedAt)}</time>
-        )}
-      </div>
-    </CardLink>
-  );
-}
-
-export function StoreCard({
-  store,
-  href,
-}: {
-  store: Pick<Store, "name" | "address" | "phone" | "photos">;
-  href?: string;
-}) {
-  const [cover] = photoUrls(store.photos);
-  return (
-    <CardLink href={href} className={CARD}>
-      <Cover src={cover} alt={store.name} icon={StoreIcon} />
-      <div className="flex flex-1 flex-col gap-2 p-5">
-        <h3 className="text-lg font-semibold text-stone-900">{store.name}</h3>
-        <p className="flex items-start gap-2 text-sm text-stone-600">
-          <MapPin className="mt-0.5 size-4 shrink-0" style={{ color: MAROON }} />
-          <span className="line-clamp-2">{store.address}</span>
-        </p>
-        {store.phone && (
-          <p className="flex items-center gap-2 text-sm text-stone-600">
-            <Phone className="size-4 shrink-0" style={{ color: MAROON }} />
-            {store.phone}
-          </p>
         )}
       </div>
     </CardLink>
@@ -127,7 +98,7 @@ export function JobCard({
         <p className="text-sm font-medium" style={{ color: MAROON }}>
           {job.department}
         </p>
-        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-stone-600">{job.description}</p>
+        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-stone-800 font-body">{job.description}</p>
       </div>
     </CardLink>
   );
@@ -158,13 +129,18 @@ export function ProductChips({ product }: { product: ProductChipsData }) {
           Mới
         </span>
       )}
+      {product.isBestSeller && (
+        <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">
+          Best Seller
+        </span>
+      )}
     </div>
   );
 }
 
 type ProductChipsData = Pick<
   Product,
-  "category" | "drinkSubType" | "merchandiseSubType" | "isNew"
+  "category" | "drinkSubType" | "merchandiseSubType" | "isNew" | "isBestSeller"
 >;
 
 /**
@@ -242,7 +218,7 @@ export function TeamMemberCard({
         {member.role}
       </p>
       {member.bio && (
-        <p className="mx-auto mt-2 line-clamp-4 max-w-56 text-xs leading-relaxed text-stone-600">
+        <p className="mx-auto mt-2 line-clamp-4 max-w-56 text-xs leading-relaxed text-stone-800 font-body">
           {member.bio}
         </p>
       )}
@@ -272,7 +248,7 @@ export function StoryBlockSection({
         {title}
       </h2>
       <div className="mt-3 h-px w-20" style={{ backgroundColor: MAROON }} />
-      <RichContent html={content} className="mt-6 text-[1.05rem] leading-loose text-stone-700" />
+      <RichContent html={content} className="mt-6 text-[1.05rem] leading-loose text-stone-950 font-body" />
     </section>
   );
 }

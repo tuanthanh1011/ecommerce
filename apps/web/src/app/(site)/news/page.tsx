@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function NewsPage() {
-  return <PostsListContent kind="news" />;
+  return <PostsListContent />;
 }

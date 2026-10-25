@@ -96,7 +96,7 @@ export default function MediaLibraryPage() {
           <EmptyState
             icon={Images}
             title="Thư viện đang trống"
-            description="Ảnh tải lên ở đây có thể dùng lại cho sản phẩm, cửa hàng và bài viết."
+            description="Ảnh tải lên ở đây có thể dùng lại cho sản phẩm và bài viết."
           />
         </div>
       ) : (

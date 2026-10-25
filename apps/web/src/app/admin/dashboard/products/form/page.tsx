@@ -8,7 +8,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 import {
   CupSoda,
-  Flame,
+  Cherry,
+  Citrus,
   Leaf,
   Loader2,
   NotebookPen,
@@ -16,7 +17,8 @@ import {
   PenTool,
   Save,
   ShoppingBag,
-  Snowflake,
+  Sparkles,
+  Star,
   Coffee,
   GlassWater,
   Info,
@@ -35,7 +37,8 @@ import { Field, FormLayout, FormSection, FormSkeleton } from "@/components/commo
 import { ChoiceCards, ChoiceChips, ToggleRow } from "@/components/common/choice";
 import { FormActionBar } from "@/components/common/form-action-bar";
 import { SitePreview } from "@/components/site/site-preview";
-import { ProductChips, ProductItem } from "@/components/site/cards";
+import { ProductChips } from "@/components/site/cards";
+import { MenuItem } from "@/components/site/products-page";
 import { PhotoGallery } from "@/components/upload/photo-gallery";
 import { cleanInput } from "@/lib/clean";
 import { formatPrice } from "@/lib/format";
@@ -64,14 +67,19 @@ const productSchema = z.object({
   price: z.string().optional(),
   status: z.nativeEnum(ProductStatus),
   isNew: z.boolean(),
+  isBestSeller: z.boolean(),
 });
 
 type ProductValues = z.infer<typeof productSchema>;
 
 const DRINK_ICONS = {
-  [DrinkSubType.HOT]: Flame,
-  [DrinkSubType.ICED]: Snowflake,
-  [DrinkSubType.FRESH]: Leaf,
+  [DrinkSubType.MILK_TEA]: CupSoda,
+  [DrinkSubType.NEW]: Sparkles,
+  [DrinkSubType.TEA]: Leaf,
+  [DrinkSubType.SPECIAL]: Star,
+  [DrinkSubType.COFFEE]: Coffee,
+  [DrinkSubType.FRUIT]: Citrus,
+  [DrinkSubType.TOPPING]: Cherry,
 };
 
 const MERCH_ICONS = {
@@ -111,6 +119,7 @@ function ProductFormInner() {
       category: ProductCategory.DRINK,
       status: ProductStatus.ACTIVE,
       isNew: false,
+      isBestSeller: false,
     },
     values: product
       ? {
@@ -122,6 +131,7 @@ function ProductFormInner() {
           price: product.price ?? "",
           status: product.status,
           isNew: product.isNew,
+          isBestSeller: product.isBestSeller,
         }
       : undefined,
   });
@@ -140,6 +150,7 @@ function ProductFormInner() {
     merchandiseSubType:
       live.category === ProductCategory.MERCHANDISE ? live.merchandiseSubType ?? null : null,
     isNew: live.isNew,
+    isBestSeller: live.isBestSeller,
     photos: product?.photos ?? [],
   };
 
@@ -231,7 +242,7 @@ function ProductFormInner() {
                 </Field>
 
                 {category === ProductCategory.DRINK && (
-                  <Field label="Loại đồ uống">
+                  <Field label="Nhóm trong menu">
                     <Controller
                       control={control}
                       name="drinkSubType"
@@ -338,12 +349,25 @@ function ProductFormInner() {
                     />
                   )}
                 />
+                <Controller
+                  control={control}
+                  name="isBestSeller"
+                  render={({ field }) => (
+                    <ToggleRow
+                      title="Best Seller"
+                      description="Hiển thị ở mục “Best Seller” đầu trang Sản phẩm."
+                      control={<Switch checked={field.value} onCheckedChange={field.onChange} />}
+                    />
+                  )}
+                />
               </FormSection>
 
-              {/* Cùng một thẻ + nhãn với trang Sản phẩm trên website
-                  (components/site/cards.tsx) — không phải bản vẽ lại. */}
-              <SitePreview>
-                <ProductItem product={previewProduct} unoptimized />
+              {/* Cùng ô sản phẩm + nhãn với trang Sản phẩm trên website
+                  (components/site/products-page.tsx, cards.tsx) — không phải bản vẽ lại. */}
+              <SitePreview label="Xem trước trên trang Sản phẩm">
+                <div className="mx-auto w-48">
+                  <MenuItem product={previewProduct} unoptimized />
+                </div>
                 <ProductChips product={previewProduct} />
                 <p
                   className="text-xl font-semibold tabular-nums"

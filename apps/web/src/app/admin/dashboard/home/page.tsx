@@ -29,7 +29,7 @@ function Preview({ children }: { children: React.ReactNode }) {
         <Eye className="size-4" /> Xem trước trên website
       </p>
       <div
-        className="isolate overflow-hidden rounded-xl bg-[#f3e9dc] text-stone-900 shadow-lg ring-1 ring-border"
+        className="site-type isolate overflow-hidden rounded-xl bg-[#f3e9dc] text-stone-900 shadow-lg ring-1 ring-border"
       >
         {children}
       </div>
@@ -270,7 +270,7 @@ function HomeEditor({ initial }: { initial: HomeSettings }) {
         {/* ── Các mục lấy từ tab khác ──────────────────────────── */}
         <FormSection
           title="Mục lấy dữ liệu từ tab khác"
-          description="Nội dung nhập ở tab Sản phẩm. Ở đây chỉ bật/tắt việc hiển thị ở trang chủ — chưa có dữ liệu thì mục tự ẩn. Cửa hàng, Tin tức, Cho đi, Tuyển dụng có trang riêng trên menu."
+          description="Nội dung nhập ở tab Sản phẩm. Ở đây chỉ bật/tắt việc hiển thị ở trang chủ — chưa có dữ liệu thì mục tự ẩn. Tin tức và Tuyển dụng có trang riêng trên menu."
           icon={Layers}
           tone="teal"
         >

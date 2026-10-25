@@ -21,7 +21,7 @@ export function HomeHero({ config }: { config: HomeSettings["hero"] }) {
       tagline={config.tagline}
       ctaLabel={config.ctaLabel}
       slides={config.slides}
-      headingClassName="text-5xl font-semibold tracking-tight text-white sm:text-6xl"
+      headingClassName="text-5xl tracking-wide text-white uppercase sm:text-6xl"
       headingStyle={{ fontFamily: "var(--font-display)" }}
     />
   );
@@ -56,7 +56,7 @@ export function HomeStory({ config }: { config: HomeSettings["story"] }) {
               </h2>
             )}
             {config.body && (
-              <p className="mt-5 max-w-xl text-[1.05rem] leading-loose whitespace-pre-line text-stone-700">
+              <p className="mt-5 max-w-xl text-lg leading-loose whitespace-pre-line text-stone-950 sm:text-xl font-body">
                 {config.body}
               </p>
             )}
@@ -116,15 +116,12 @@ export function HomeSpace({ config }: { config: HomeSettings["space"] }) {
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-black/55" />
         <Reveal className="relative z-10 px-4 py-24">
           {config.title && (
-            <h2
-              className="text-4xl font-bold tracking-tight text-white sm:text-6xl"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
+            <h2 className="font-title text-4xl tracking-wide text-white uppercase sm:text-6xl">
               {config.title}
             </h2>
           )}
           {config.tagline && (
-            <p className="mt-5 text-sm font-medium tracking-[0.3em] text-white/90 uppercase sm:text-base">
+            <p className="font-body mt-5 text-sm tracking-[0.3em] text-white/90 uppercase sm:text-base">
               {config.tagline}
             </p>
           )}

@@ -66,7 +66,7 @@ const BACK = "/admin/dashboard/admins";
 
 const PERMISSIONS: Record<AdminRole, string[]> = {
   [AdminRole.ADMIN]: [
-    "Quản lý toàn bộ nội dung công khai (sản phẩm, cửa hàng, tin tức, tuyển dụng...)",
+    "Quản lý toàn bộ nội dung công khai (sản phẩm, tin tức, tuyển dụng...)",
     "Quản lý tài liệu, thông báo & lịch trình nội bộ",
     "Tạo và khoá tài khoản khác, kể cả admin khác",
   ],
@@ -208,7 +208,6 @@ function CreateAdminForm() {
     register,
     handleSubmit,
     watch,
-    setValue,
     reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<CreateValues>({

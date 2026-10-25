@@ -24,7 +24,7 @@ export function RichContent({
   if (!clean) return null;
   return (
     <div
-      className={cn("rich-content", className)}
+      className={cn("rich-content font-body", className)}
       dangerouslySetInnerHTML={{ __html: clean }}
     />
   );

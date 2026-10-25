@@ -10,20 +10,11 @@ export interface CurrentAdmin {
   isActive: boolean;
 }
 
-export function useCurrentAdmin() {
+export function useCurrentAdmin(enabled = true) {
   return useQuery({
     queryKey: ["auth", "me"],
     queryFn: () => apiClient.get<CurrentAdmin>("/auth/me"),
     staleTime: 5 * 60 * 1000,
+    enabled,
   });
-}
-
-/**
- * Employees are read-only everywhere in the CMS. The API enforces this on
- * every write; this hook is what the UI uses to hide the controls that would
- * only ever produce a 403. `false` while the user is still loading.
- */
-export function useIsReadOnly(): boolean {
-  const { data } = useCurrentAdmin();
-  return data?.role === AdminRole.EMPLOYEE;
 }
