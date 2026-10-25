@@ -34,6 +34,9 @@ export class Product extends BaseEntity {
   @Column({ default: false })
   isNew: boolean;
 
+  @Column({ default: false })
+  isBestSeller: boolean;
+
   @Column({ type: 'int', default: 0 })
   sortOrder: number;
 

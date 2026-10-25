@@ -13,7 +13,7 @@ export function SitePreview({
 }) {
   return (
     <PreviewFrame label={label}>
-      <div className="space-y-4 bg-[#f3e9dc] p-4 text-stone-900">{children}</div>
+      <div className="site-type space-y-4 bg-[#f3e9dc] p-4 text-stone-900">{children}</div>
     </PreviewFrame>
   );
 }

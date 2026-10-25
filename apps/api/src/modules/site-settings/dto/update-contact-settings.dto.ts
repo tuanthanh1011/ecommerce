@@ -43,6 +43,16 @@ export class UpdateContactSettingsDto {
   @IsUrl(URL_OPTIONS)
   instagramUrl?: string;
 
+  @ApiPropertyOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== '')
+  @IsUrl(URL_OPTIONS)
+  youtubeUrl?: string;
+
+  @ApiPropertyOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== '')
+  @IsUrl(URL_OPTIONS)
+  tiktokUrl?: string;
+
   @ApiPropertyOptional({ description: 'Link chat (Zalo, Messenger...)' })
   @ValidateIf((_, v) => v !== undefined && v !== '')
   @IsUrl(URL_OPTIONS)

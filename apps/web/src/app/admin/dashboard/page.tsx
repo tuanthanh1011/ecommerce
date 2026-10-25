@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
-  CalendarClock,
-  MapPin,
-  Megaphone,
   Newspaper,
   PenLine,
   Plus,
@@ -17,11 +13,9 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { EmptyState } from "@/components/common/empty-state";
 import { getNavItem } from "@/components/layout/nav-items";
 import { useCurrentAdmin } from "@/hooks/use-auth";
-import { useStoresQuery } from "@/hooks/use-stores";
 import { useProductsQuery } from "@/hooks/use-products";
 import { usePostsQuery } from "@/hooks/use-posts";
 import { useJobsQuery } from "@/hooks/use-jobs";
-import { useAnnouncementsQuery, useScheduleQuery } from "@/hooks/use-internal";
 import { POST_TYPE_LABELS, POST_TYPE_TONES } from "@/lib/constants";
 import { TONES, toneChip } from "@/lib/tones";
 import { formatDate } from "@/lib/format";
@@ -252,92 +246,12 @@ function RecentPosts() {
   );
 }
 
-function UpcomingSchedule() {
-  const { data, isLoading } = useScheduleQuery();
-  const [now] = useState(() => Date.now());
-  const upcoming = (data ?? [])
-    .filter((e) => new Date(e.endAt ?? e.startAt).getTime() >= now)
-    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
-    .slice(0, 4);
-
-  return (
-    <Panel title="Lịch sắp tới" icon={CalendarClock} href="/admin/dashboard/internal/schedule">
-      {isLoading ? (
-        <ListSkeleton rows={3} />
-      ) : upcoming.length === 0 ? (
-        <EmptyState icon={CalendarClock} title="Không có lịch sắp tới" className="py-10" />
-      ) : (
-        <ul className="space-y-1 p-2">
-          {upcoming.map((entry) => {
-            const d = new Date(entry.startAt);
-            return (
-              <li key={entry.id} className="flex gap-3 rounded-lg p-2.5 hover:bg-muted/40">
-                <div className="flex w-12 shrink-0 flex-col items-center overflow-hidden rounded-lg border bg-card text-center shadow-xs">
-                  <span className="w-full bg-teal-600 py-0.5 text-[10px] font-semibold text-white uppercase">
-                    Th{d.getMonth() + 1}
-                  </span>
-                  <span className="py-1 text-lg leading-none font-semibold tabular-nums">
-                    {d.getDate()}
-                  </span>
-                </div>
-                <div className="min-w-0 pt-0.5">
-                  <p className="truncate text-sm font-medium">{entry.title}</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                    {d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-                    {entry.location && (
-                      <>
-                        <span>·</span>
-                        <MapPin className="size-3" />
-                        <span className="truncate">{entry.location}</span>
-                      </>
-                    )}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
-function LatestAnnouncements() {
-  const { data, isLoading } = useAnnouncementsQuery();
-  const items = (data ?? []).slice(0, 3);
-
-  return (
-    <Panel title="Thông báo nội bộ" icon={Megaphone} href="/admin/dashboard/internal/announcements">
-      {isLoading ? (
-        <ListSkeleton rows={2} />
-      ) : items.length === 0 ? (
-        <EmptyState icon={Megaphone} title="Chưa có thông báo" className="py-10" />
-      ) : (
-        <ul className="space-y-2 p-3">
-          {items.map((a) => (
-            <li
-              key={a.id}
-              className="rounded-lg border-l-[3px] border-pink-500 bg-pink-50/50 px-3 py-2.5 dark:bg-pink-500/5"
-            >
-              <p className="truncate text-sm font-medium">{a.title}</p>
-              <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                {a.content}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
 const QUICK_LINKS = [
-  { href: "/admin/dashboard/stores", to: "/admin/dashboard/stores/form/", label: "Thêm cửa hàng" },
   { href: "/admin/dashboard/jobs", to: "/admin/dashboard/jobs/form/", label: "Đăng tin tuyển dụng" },
   { href: "/admin/dashboard/media", to: "/admin/dashboard/media", label: "Tải ảnh lên" },
-  { href: "/admin/dashboard/internal/documents", to: "/admin/dashboard/internal/documents/form/", label: "Thêm tài liệu" },
+  { href: "/admin/dashboard/internal-pages", to: "/admin/dashboard/internal-pages", label: "Sửa trang Nội bộ" },
   { href: "/admin/dashboard/story", to: "/admin/dashboard/story", label: "Sửa câu chuyện" },
-  { href: "/admin/dashboard/internal/schedule", to: "/admin/dashboard/internal/schedule/form/", label: "Lên lịch mới" },
+  { href: "/admin/dashboard/home", to: "/admin/dashboard/home", label: "Sửa trang chủ" },
 ];
 
 function QuickActions() {
@@ -372,7 +286,6 @@ function QuickActions() {
 }
 
 export default function DashboardHomePage() {
-  const stores = useStoresQuery();
   const products = useProductsQuery();
   const posts = usePostsQuery();
   const jobs = useJobsQuery();
@@ -381,20 +294,13 @@ export default function DashboardHomePage() {
     <div className="space-y-6">
       <Hero />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard href="/admin/dashboard/stores" value={stores.data?.total} hint="Điểm bán trên website" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard href="/admin/dashboard/products" value={products.data?.total} hint="Đồ uống & vật phẩm" />
         <StatCard href="/admin/dashboard/posts" value={posts.data?.total} hint="Tất cả chuyên mục" />
         <StatCard href="/admin/dashboard/jobs" value={jobs.data?.total} hint="Tin tuyển dụng" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <RecentPosts />
-        <div className="space-y-6">
-          <UpcomingSchedule />
-          <LatestAnnouncements />
-        </div>
-      </div>
+      <RecentPosts />
 
       <QuickActions />
     </div>

@@ -1,28 +1,17 @@
 "use client";
 
-import { usePublicProducts, type PostsFilter } from "@/hooks/use-public-site";
-import { PostType } from "@/lib/constants";
+import { usePublicProducts } from "@/hooks/use-public-site";
 import { ProductItem } from "./cards";
 import { Reveal } from "./reveal";
 import { SectionHeading } from "./ui";
 
 /**
  * The home page ends with the new-products teaser: the latest few items with
- * a link to the full page, rendered only while there is content. Stores,
- * news, give-back and jobs have their own pages and menu entries.
+ * a link to the full page, rendered only while there is content. News and
+ * jobs have their own pages and menu entries.
  */
 
 const HOME_LIMIT = 3;
-
-/** Params of the nav's presence checks for the news / give-back entries. */
-export const HOME_POSTS_FILTER: PostsFilter = {
-  limit: HOME_LIMIT,
-  excludeType: PostType.GIVE_BACK,
-};
-export const HOME_GIVE_BACK_FILTER: PostsFilter = {
-  limit: HOME_LIMIT,
-  type: PostType.GIVE_BACK,
-};
 
 export function NewProductsSection() {
   const { data, isLoading } = usePublicProducts({ limit: HOME_LIMIT, isNew: true });

@@ -38,4 +38,10 @@ export class ProductsQueryDto extends PaginationQueryDto {
   @Transform(parseQueryBoolean)
   @IsBoolean()
   isNew?: boolean;
+
+  @ApiPropertyOptional({ description: 'Chỉ lấy sản phẩm Best Seller' })
+  @IsOptional()
+  @Transform(parseQueryBoolean)
+  @IsBoolean()
+  isBestSeller?: boolean;
 }

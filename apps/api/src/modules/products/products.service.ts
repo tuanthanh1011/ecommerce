@@ -30,6 +30,9 @@ export class ProductsService {
           : {}),
         ...(query.status ? { status: query.status } : {}),
         ...(query.isNew !== undefined ? { isNew: query.isNew } : {}),
+        ...(query.isBestSeller !== undefined
+          ? { isBestSeller: query.isBestSeller }
+          : {}),
         ...(publicOnly ? { status: ProductStatus.ACTIVE } : {}),
       },
       relations: { photos: true },

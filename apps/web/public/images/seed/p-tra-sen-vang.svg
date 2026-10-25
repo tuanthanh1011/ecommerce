@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800" role="img" aria-label="Trà Sen Vàng">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a8420f"/><stop offset="1" stop-color="#f2a65a"/></linearGradient></defs>
+  <rect width="600" height="800" fill="url(#g)"/>
+  <circle cx="520" cy="110" r="190" fill="#fff" fill-opacity="0.08"/>
+  <circle cx="80" cy="700" r="230" fill="#fff" fill-opacity="0.07"/>
+  <g transform="translate(300 380)" fill="none" stroke="#fff" stroke-opacity="0.9" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M-70 -60h140l-18 150a30 30 0 0 1-30 26h-44a30 30 0 0 1-30-26z"/><path d="M-62 -10h124"/><path d="M10 -60l30 -80"/></g>
+</svg>

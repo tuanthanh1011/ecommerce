@@ -10,7 +10,6 @@
  * ship with the web app and are served by the same origin as the site.
  */
 import {
-  DocumentCategory,
   DrinkSubType,
   JobStatus,
   MerchandiseSubType,
@@ -19,6 +18,10 @@ import {
   TeamMemberGroup,
 } from '../common/enums';
 import { HomeSettings } from '../modules/site-settings/home-settings';
+import {
+  DEFAULT_INTERNAL_NOTICES,
+  InternalNotices,
+} from '../modules/site-settings/internal-settings';
 
 const img = (name: string) => `/images/seed/${name}.svg`;
 
@@ -30,6 +33,8 @@ export const CONTACT_SETTINGS = {
   closingMessage: 'Cảm ơn bạn đã đồng hành cùng S+ Coffee – hẹn gặp lại bạn!',
   facebookUrl: 'https://www.facebook.com/',
   instagramUrl: 'https://www.instagram.com/',
+  youtubeUrl: 'https://www.youtube.com/',
+  tiktokUrl: 'https://www.tiktok.com/',
   chatUrl: 'https://m.me/',
 };
 
@@ -57,13 +62,7 @@ export const HOME_SETTINGS: HomeSettings = {
     tagline: 'Học Tập · Làm Việc · Kết Nối · Thư Giãn',
     imageUrl: '/images/home/khong-gian-bg.jpg',
   },
-  sections: {
-    newProducts: true,
-    stores: true,
-    news: true,
-    giveBack: true,
-    jobs: true,
-  },
+  sections: { newProducts: true },
 };
 
 // ── Story ───────────────────────────────────────────────────────────────────
@@ -157,18 +156,20 @@ interface SeedProduct {
   drinkSubType?: DrinkSubType;
   merchandiseSubType?: MerchandiseSubType;
   description: string;
-  price: number;
+  price: number | null;
   isNew?: boolean;
+  isBestSeller?: boolean;
   photo: string;
 }
 
 const drink = (
   sub: DrinkSubType,
   name: string,
-  price: number,
+  price: number | null,
   description: string,
   photo: string,
   isNew = false,
+  isBestSeller = false,
 ): SeedProduct => ({
   name,
   category: ProductCategory.DRINK,
@@ -176,6 +177,7 @@ const drink = (
   description,
   price,
   isNew,
+  isBestSeller,
   photo,
 });
 
@@ -196,64 +198,300 @@ const merch = (
   photo,
 });
 
-const { HOT, ICED, FRESH } = DrinkSubType;
+const { MILK_TEA, NEW, TEA, SPECIAL, COFFEE, FRUIT, TOPPING } = DrinkSubType;
 const { NOTEBOOK, PEN, TUMBLER, BAG } = MerchandiseSubType;
 
-/** Listed in menu order — sortOrder is assigned from the array index. */
+/** The S+ menu, grouped as on the printed menu. sortOrder follows the array index. */
 export const PRODUCTS: SeedProduct[] = [
-  drink(HOT, 'Cà phê đen nóng', 29000, 'Cà phê phin truyền thống, đậm đà và thơm nồng.', img('p-ca-phe-den')),
-  drink(HOT, 'Cà phê sữa nóng', 32000, 'Vị đắng nhẹ của cà phê hoà cùng sữa đặc béo ngậy.', img('p-ca-phe-sua-nong')),
-  drink(HOT, 'Latte nóng', 45000, 'Espresso kết hợp sữa tươi đánh nóng, bề mặt bọt mịn.', img('p-latte-nong')),
-  drink(HOT, 'Cappuccino', 45000, 'Tỉ lệ cân bằng giữa espresso, sữa nóng và lớp bọt dày.', img('p-cappuccino')),
-  drink(HOT, 'Trà gừng mật ong', 42000, 'Trà gừng ấm nồng, ngọt dịu từ mật ong — hợp những ngày se lạnh.', img('p-tra-gung'), true),
-  drink(HOT, 'Cacao nóng', 42000, 'Cacao nguyên chất pha cùng sữa tươi, thêm lớp kem nhẹ phía trên.', img('p-cacao-nong')),
-  drink(ICED, 'Cà phê sữa đá', 32000, 'Món quen thuộc của S+: đậm, mát và ngọt vừa phải.', img('p-ca-phe-sua-da')),
-  drink(ICED, 'Bạc xỉu đá', 35000, 'Nhiều sữa, ít cà phê — êm dịu cho người mới uống cà phê.', img('p-bac-xiu')),
-  drink(ICED, 'Cold brew cam', 52000, 'Cà phê ủ lạnh 18 giờ kết hợp nước cam vắt, chua thanh sảng khoái.', img('p-cold-brew-cam'), true),
-  drink(ICED, 'Trà đào cam sả', 49000, 'Trà đen thơm mùi sả, đào miếng giòn và cam tươi.', img('p-tra-dao')),
-  drink(ICED, 'Matcha latte đá', 52000, 'Matcha Nhật xay mịn, hoà cùng sữa tươi lạnh.', img('p-matcha-da'), true),
-  drink(ICED, 'Americano đá', 39000, 'Espresso pha loãng với nước đá, vị cà phê rõ và sạch.', img('p-americano-da')),
-  drink(FRESH, 'Sinh tố bơ', 52000, 'Bơ sáp Đắk Lắk xay cùng sữa, béo mịn tự nhiên.', img('p-sinh-to-bo')),
-  drink(FRESH, 'Nước ép cam', 45000, 'Cam vàng vắt tươi mỗi ngày, không thêm đường.', img('p-nuoc-cam')),
-  drink(FRESH, 'Nước ép dưa hấu', 42000, 'Dưa hấu ép lạnh, ngọt mát giải nhiệt.', img('p-dua-hau')),
-  drink(FRESH, 'Sinh tố xoài', 49000, 'Xoài cát chín cây xay mịn cùng sữa chua.', img('p-sinh-to-xoai')),
-  merch(NOTEBOOK, 'Sổ tay S+ bìa da', 119000, 'Sổ khổ A5, giấy kem 100gsm, bìa da PU có dập logo S+.', img('m-so-tay'), true),
-  merch(PEN, 'Bút gel S+', 39000, 'Bút gel mực đen 0.5mm, thân gỗ nhẹ, viết êm.', img('m-but')),
-  merch(TUMBLER, 'Bình giữ nhiệt S+ 500ml', 259000, 'Inox 304 hai lớp, giữ nóng 8 giờ, giữ lạnh 12 giờ.', img('m-binh-giu-nhiet'), true),
-  merch(TUMBLER, 'Ly sứ S+', 149000, 'Ly sứ trắng men bóng 350ml, in logo S+ màu đỏ đô.', img('m-ly-su')),
-  merch(BAG, 'Túi tote canvas S+', 99000, 'Túi vải canvas dày, quai dài đeo vai, in hoạ tiết S+.', img('m-tui-tote')),
-];
-
-// ── Stores ──────────────────────────────────────────────────────────────────
-
-export const STORES = [
-  {
-    name: 'S+ Coffee Cầu Giấy',
-    address: '25 Trần Thái Tông, Dịch Vọng, Cầu Giấy, Hà Nội',
-    phone: '024 3333 0001',
-    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=25+Tran+Thai+Tong+Cau+Giay+Ha+Noi',
-    description:
-      'Cửa hàng đầu tiên của S+, không gian rộng rãi với nhiều ổ cắm, wifi mạnh — lý tưởng để học tập và làm việc. Có khu vực yên tĩnh ở tầng 2.',
-    photos: ['s-1', 'n-barista'],
-  },
-  {
-    name: 'S+ Coffee Đống Đa',
-    address: '112 Chùa Bộc, Quang Trung, Đống Đa, Hà Nội',
-    phone: '024 3333 0002',
-    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=112+Chua+Boc+Dong+Da+Ha+Noi',
-    description:
-      'Nằm gần các trường đại học, S+ Đống Đa luôn nhộn nhịp với các nhóm bạn trẻ. Có khu ngồi ngoài trời và góc sách nhỏ.',
-    photos: ['s-2'],
-  },
-  {
-    name: 'S+ Coffee Quận 1',
-    address: '48 Lê Thị Hồng Gấm, Nguyễn Thái Bình, Quận 1, TP. Hồ Chí Minh',
-    phone: '028 3333 0003',
-    googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=48+Le+Thi+Hong+Gam+Quan+1+TP+HCM',
-    description:
-      'Cửa hàng đầu tiên của S+ ở phía Nam, thiết kế ấm áp với gam màu đỏ đô đặc trưng, phù hợp cho cuộc hẹn nhỏ và họp nhanh.',
-    photos: ['s-3'],
-  },
+  drink(
+    MILK_TEA,
+    'Hồng Trà Sữa',
+    35000,
+    'Trà sữa Việt · Hồng Trà Sữa.',
+    img('p-hong-tra-sua'),
+    false,
+    true,
+  ),
+  drink(
+    MILK_TEA,
+    'Olong Khói',
+    40000,
+    'Trà sữa Việt · Olong Khói.',
+    img('p-olong-khoi'),
+    false,
+    true,
+  ),
+  drink(
+    MILK_TEA,
+    'Trà Sữa Socola',
+    40000,
+    'Trà sữa Việt · Trà Sữa Socola.',
+    img('p-tra-sua-socola'),
+    false,
+    false,
+  ),
+  drink(
+    NEW,
+    'Thơm Cốm',
+    45000,
+    'Món mới · Thơm Cốm.',
+    img('p-thom-com'),
+    true,
+    false,
+  ),
+  drink(
+    NEW,
+    'Thơm Gạo',
+    45000,
+    'Món mới · Thơm Gạo.',
+    img('p-thom-gao'),
+    true,
+    false,
+  ),
+  drink(
+    NEW,
+    'Thơm Khoai Môn',
+    40000,
+    'Món mới · Thơm Khoai Môn.',
+    img('p-thom-khoai-mon'),
+    true,
+    false,
+  ),
+  drink(
+    TEA,
+    'Trà Măng Cầu',
+    40000,
+    'Trà · Trà Măng Cầu.',
+    img('p-tra-mang-cau'),
+    false,
+    true,
+  ),
+  drink(
+    TEA,
+    'Trà Đào Cam Sả',
+    35000,
+    'Trà · Trà Đào Cam Sả.',
+    img('p-tra-dao-cam-sa'),
+    false,
+    true,
+  ),
+  drink(
+    TEA,
+    'Trà Sen Vàng',
+    45000,
+    'Trà · Trà Sen Vàng.',
+    img('p-tra-sen-vang'),
+    false,
+    true,
+  ),
+  drink(
+    TEA,
+    'Trà Thạch Đào',
+    40000,
+    'Trà · Trà Thạch Đào.',
+    img('p-tra-thach-dao'),
+    false,
+    false,
+  ),
+  drink(
+    TEA,
+    'Trà Cam Xoài',
+    40000,
+    'Trà · Trà Cam Xoài.',
+    img('p-tra-cam-xoai'),
+    false,
+    true,
+  ),
+  drink(
+    SPECIAL,
+    'Matcha Latte',
+    40000,
+    'Đặc biệt · Matcha Latte.',
+    img('p-matcha-latte'),
+    false,
+    true,
+  ),
+  drink(
+    SPECIAL,
+    'Sữa Tươi Đường Đen',
+    35000,
+    'Đặc biệt · Sữa Tươi Đường Đen.',
+    img('p-sua-tuoi-duong-den'),
+    false,
+    false,
+  ),
+  drink(
+    SPECIAL,
+    'Sữa Tươi Kem Dừa Nướng',
+    45000,
+    'Đặc biệt · Sữa Tươi Kem Dừa Nướng.',
+    img('p-sua-tuoi-kem-dua-nuong'),
+    false,
+    true,
+  ),
+  drink(
+    SPECIAL,
+    'Sữa Chua Nha Đam',
+    40000,
+    'Đặc biệt · Sữa Chua Nha Đam.',
+    img('p-sua-chua-nha-dam'),
+    false,
+    false,
+  ),
+  drink(
+    SPECIAL,
+    'Sữa Chua Xoài',
+    40000,
+    'Đặc biệt · Sữa Chua Xoài.',
+    img('p-sua-chua-xoai'),
+    false,
+    false,
+  ),
+  drink(
+    SPECIAL,
+    'Sữa Chua Việt Quất',
+    40000,
+    'Đặc biệt · Sữa Chua Việt Quất.',
+    img('p-sua-chua-viet-quat'),
+    false,
+    false,
+  ),
+  drink(
+    COFFEE,
+    'Nâu Đá',
+    35000,
+    'Cà phê · Nâu Đá.',
+    img('p-nau-da'),
+    false,
+    false,
+  ),
+  drink(
+    COFFEE,
+    'Bạc Xỉu',
+    40000,
+    'Cà phê · Bạc Xỉu.',
+    img('p-bac-xiu'),
+    false,
+    true,
+  ),
+  drink(
+    COFFEE,
+    'Cà Phê Muối',
+    40000,
+    'Cà phê · Cà Phê Muối.',
+    img('p-ca-phe-muoi'),
+    false,
+    false,
+  ),
+  drink(
+    FRUIT,
+    'Nước Ép Cam',
+    40000,
+    'Nước hoa quả · Nước Ép Cam.',
+    img('p-nuoc-ep-cam'),
+    false,
+    false,
+  ),
+  drink(
+    FRUIT,
+    'Nước Ép Lựu',
+    40000,
+    'Nước hoa quả · Nước Ép Lựu.',
+    img('p-nuoc-ep-luu'),
+    false,
+    false,
+  ),
+  drink(
+    FRUIT,
+    'Chanh Vàng',
+    35000,
+    'Nước hoa quả · Chanh Vàng.',
+    img('p-chanh-vang'),
+    false,
+    false,
+  ),
+  drink(
+    TOPPING,
+    'Trân Châu Đen',
+    null,
+    'Topping · Trân Châu Đen.',
+    img('p-tran-chau-den'),
+    false,
+    false,
+  ),
+  drink(
+    TOPPING,
+    'Trân Châu Trắng',
+    null,
+    'Topping · Trân Châu Trắng.',
+    img('p-tran-chau-trang'),
+    false,
+    false,
+  ),
+  drink(
+    TOPPING,
+    'Hạt Lựu',
+    null,
+    'Topping · Hạt Lựu.',
+    img('p-hat-luu'),
+    false,
+    false,
+  ),
+  drink(
+    TOPPING,
+    'Thạch Dừa',
+    null,
+    'Topping · Thạch Dừa.',
+    img('p-thach-dua'),
+    false,
+    false,
+  ),
+  drink(
+    TOPPING,
+    'Kem Cheese',
+    null,
+    'Topping · Kem Cheese.',
+    img('p-kem-cheese'),
+    false,
+    false,
+  ),
+  merch(
+    NOTEBOOK,
+    'Sổ tay S+ bìa da',
+    119000,
+    'Sổ khổ A5, giấy kem 100gsm, bìa da PU có dập logo S+.',
+    img('m-so-tay'),
+    true,
+  ),
+  merch(
+    PEN,
+    'Bút gel S+',
+    39000,
+    'Bút gel mực đen 0.5mm, thân gỗ nhẹ, viết êm.',
+    img('m-but'),
+  ),
+  merch(
+    TUMBLER,
+    'Bình giữ nhiệt S+ 500ml',
+    259000,
+    'Inox 304 hai lớp, giữ nóng 8 giờ, giữ lạnh 12 giờ.',
+    img('m-binh-giu-nhiet'),
+    true,
+  ),
+  merch(
+    TUMBLER,
+    'Ly sứ S+',
+    149000,
+    'Ly sứ trắng men bóng 350ml, in logo S+ màu đỏ đô.',
+    img('m-ly-su'),
+  ),
+  merch(
+    BAG,
+    'Túi tote canvas S+',
+    99000,
+    'Túi vải canvas dày, quai dài đeo vai, in hoạ tiết S+.',
+    img('m-tui-tote'),
+  ),
 ];
 
 // ── Posts ───────────────────────────────────────────────────────────────────
@@ -263,10 +501,12 @@ const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
 export const POSTS = [
   {
     slug: 'khai-truong-s-plus-quan-1',
-    title: 'S+ Coffee chính thức khai trương cửa hàng đầu tiên tại TP. Hồ Chí Minh',
+    title:
+      'S+ Coffee chính thức khai trương cửa hàng đầu tiên tại TP. Hồ Chí Minh',
     type: PostType.ANNOUNCEMENT,
     cover: 'n-thong-bao',
-    excerpt: 'Từ ngày hôm nay, S+ Coffee Quận 1 mở cửa đón khách với nhiều ưu đãi dành cho 7 ngày đầu tiên.',
+    excerpt:
+      'Từ ngày hôm nay, S+ Coffee Quận 1 mở cửa đón khách với nhiều ưu đãi dành cho 7 ngày đầu tiên.',
     publishedAt: daysAgo(3),
     content: `<p>Sau nhiều tháng chuẩn bị, <strong>S+ Coffee Quận 1</strong> chính thức mở cửa. Đây là cửa hàng đầu tiên của S+ tại TP. Hồ Chí Minh.</p>
 <h3>Ưu đãi tuần khai trương</h3>
@@ -282,7 +522,8 @@ export const POSTS = [
     title: 'Thông báo giờ mở cửa các cửa hàng dịp lễ',
     type: PostType.ANNOUNCEMENT,
     cover: 'n-thong-bao',
-    excerpt: 'Toàn hệ thống S+ phục vụ như bình thường trong dịp lễ, riêng một số cửa hàng thay đổi giờ đóng cửa.',
+    excerpt:
+      'Toàn hệ thống S+ phục vụ như bình thường trong dịp lễ, riêng một số cửa hàng thay đổi giờ đóng cửa.',
     publishedAt: daysAgo(14),
     content: `<p>Trong dịp nghỉ lễ sắp tới, S+ Coffee tiếp tục phục vụ khách hàng với khung giờ <strong>07:00 – 22:30</strong>.</p>
 <p>Riêng cửa hàng Đống Đa sẽ đóng cửa sớm lúc <strong>21:00</strong> vào ngày cuối kỳ nghỉ. Mong bạn thông cảm và sắp xếp thời gian ghé quán.</p>`,
@@ -292,7 +533,8 @@ export const POSTS = [
     title: 'Sắp ra mắt: Bộ sưu tập đồ uống mùa thu',
     type: PostType.COMING_SOON,
     cover: 'n-coming-soon',
-    excerpt: 'Ba thức uống mới lấy cảm hứng từ hương vị mùa thu sẽ có mặt tại S+ từ đầu tháng sau.',
+    excerpt:
+      'Ba thức uống mới lấy cảm hứng từ hương vị mùa thu sẽ có mặt tại S+ từ đầu tháng sau.',
     publishedAt: daysAgo(6),
     content: `<p>Mùa thu đang đến, và S+ cũng đã sẵn sàng với bộ sưu tập đồ uống giới hạn:</p>
 <ol>
@@ -307,7 +549,8 @@ export const POSTS = [
     title: 'Ra mắt Cold brew cam – vị chua thanh cho ngày nắng',
     type: PostType.NEW_PRODUCT,
     cover: 'n-san-pham-moi',
-    excerpt: 'Cà phê ủ lạnh 18 giờ kết hợp nước cam vắt, thức uống mới đang được yêu thích tại S+.',
+    excerpt:
+      'Cà phê ủ lạnh 18 giờ kết hợp nước cam vắt, thức uống mới đang được yêu thích tại S+.',
     publishedAt: daysAgo(9),
     content: `<p><strong>Cold brew cam</strong> là sự kết hợp giữa cà phê ủ lạnh 18 giờ và nước cam vắt tươi. Vị chua thanh của cam làm nổi bật hương trái cây tự nhiên trong hạt cà phê.</p>
 <p>Gợi ý: uống lạnh với nhiều đá, ngon nhất vào buổi chiều.</p>`,
@@ -317,7 +560,8 @@ export const POSTS = [
     title: 'Matcha latte đá – lựa chọn mới cho người không uống cà phê',
     type: PostType.NEW_PRODUCT,
     cover: 'n-san-pham-moi',
-    excerpt: 'Matcha Nhật xay mịn hoà cùng sữa tươi, vị trà đậm và hậu ngọt nhẹ.',
+    excerpt:
+      'Matcha Nhật xay mịn hoà cùng sữa tươi, vị trà đậm và hậu ngọt nhẹ.',
     publishedAt: daysAgo(20),
     content: `<p>Không phải ai cũng yêu cà phê, vì vậy S+ giới thiệu <strong>Matcha latte đá</strong> — bột matcha Nhật xay mịn, đánh tan cùng sữa tươi lạnh.</p>
 <p>Bạn có thể chọn mức đường (0%, 50%, 100%) khi gọi món.</p>`,
@@ -327,55 +571,14 @@ export const POSTS = [
     title: 'Một ngày của barista S+: phía sau mỗi ly cà phê',
     type: PostType.CULTURE_ARTICLE,
     cover: 'n-van-hoa',
-    excerpt: 'Từ 6 giờ sáng chuẩn bị quán đến lúc đóng cửa, cùng xem barista S+ làm việc như thế nào.',
+    excerpt:
+      'Từ 6 giờ sáng chuẩn bị quán đến lúc đóng cửa, cùng xem barista S+ làm việc như thế nào.',
     publishedAt: daysAgo(30),
     content: `<p>06:00 – Barista đến quán, kiểm tra máy pha, xay thử và nếm espresso đầu tiên để điều chỉnh độ xay.</p>
 <p>07:00 – Mở cửa. Những vị khách quen đầu tiên bước vào, và barista nhớ luôn món quen thuộc của họ.</p>
 <p>12:00 – Giờ cao điểm. Mọi người phối hợp nhịp nhàng: người pha, người ra món, người tiếp khách.</p>
 <p>22:30 – Đóng cửa. Vệ sinh máy, kiểm kê nguyên liệu và chuẩn bị cho ngày mai.</p>
 <blockquote>“Mỗi ly cà phê là một lời chào.” — Barista S+</blockquote>`,
-  },
-  {
-    slug: 'ca-phe-treo-s-plus',
-    title: 'Chương trình “Cà phê treo”: một ly ấm cho người cần',
-    type: PostType.GIVE_BACK,
-    cover: 'g-1',
-    excerpt: 'Mỗi ly cà phê bạn “treo” tại S+ sẽ được trao tận tay cho một người lao động cần nghỉ chân.',
-    publishedAt: daysAgo(5),
-    content: `<p>“Cà phê treo” là hoạt động quen thuộc của S+: khách hàng có thể trả trước một hoặc nhiều ly cho những người cần giúp đỡ.</p>
-<p>Chỉ riêng tháng vừa qua, cộng đồng S+ đã cùng nhau trao đi <strong>hơn 1.200 ly cà phê và trà nóng</strong> cho tài xế công nghệ, công nhân vệ sinh và người bán hàng rong quanh các cửa hàng.</p>
-<p>Cảm ơn bạn đã cùng S+ lan toả sự ấm áp.</p>`,
-  },
-  {
-    slug: 'mua-dong-am-s-plus',
-    title: 'Mùa đông ấm: tặng áo ấm cho trẻ em vùng cao',
-    type: PostType.GIVE_BACK,
-    cover: 'g-2',
-    excerpt: 'Hơn 500 chiếc áo ấm đã được gửi tới các điểm trường vùng cao nhờ sự chung tay của khách hàng S+.',
-    publishedAt: daysAgo(40),
-    content: `<p>Cuối năm ngoái, S+ phát động chương trình <strong>“Mùa đông ấm”</strong> kêu gọi khách hàng quyên góp áo ấm cũ và mới.</p>
-<p>Đoàn thiện nguyện của S+ đã mang <strong>hơn 500 chiếc áo ấm</strong> cùng sách vở tới các điểm trường vùng cao. Những nụ cười của các em là món quà lớn nhất với chúng tôi.</p>`,
-  },
-  {
-    slug: 'goc-sach-nho-s-plus',
-    title: 'Góc sách nhỏ: đọc miễn phí tại S+ Đống Đa',
-    type: PostType.GIVE_BACK,
-    cover: 'g-3',
-    excerpt: 'Hơn 300 đầu sách do khách hàng đóng góp, sẵn sàng cho bạn đọc tại chỗ hoàn toàn miễn phí.',
-    publishedAt: daysAgo(55),
-    content: `<p>Tại S+ Coffee Đống Đa, bạn sẽ tìm thấy một giá sách nhỏ với hơn 300 đầu sách do chính khách hàng đóng góp.</p>
-<p>Hãy mượn một cuốn sách, gọi một ly nước và ngồi lại thật lâu. Nếu có sách hay, bạn cũng có thể tặng lại cho kệ sách chung này.</p>`,
-  },
-  {
-    // Employee-only: must never appear on the public site.
-    slug: 'cap-nhat-quy-trinh-ca-moi',
-    title: '[Nội bộ] Cập nhật quy trình giao ca từ tháng này',
-    type: PostType.INTERNAL_UPDATE,
-    cover: null,
-    excerpt: 'Quy trình giao ca mới áp dụng cho toàn bộ cửa hàng.',
-    publishedAt: daysAgo(2),
-    content: `<p>Từ tháng này, mọi cửa hàng áp dụng biểu mẫu giao ca mới gồm: kiểm kê quầy, tình trạng máy móc và các lưu ý đặc biệt cho ca sau.</p>
-<p>Quản lý ca chịu trách nhiệm ký xác nhận trước khi rời quán.</p>`,
   },
 ];
 
@@ -437,77 +640,17 @@ export const JOBS = [
   },
 ];
 
-// ── CMS-only content (staff area) ───────────────────────────────────────────
+// ── Nội bộ: Thông Báo (mục lục + link "Chi Tiết") ───────────────────────────
+// "Con người Phù Hợp" content lives in site-settings/internal-settings.ts.
 
-export const DOCUMENTS = [
-  {
-    title: 'Quy trình mở cửa hàng buổi sáng',
-    category: DocumentCategory.WORKFLOW,
-    content: `<ol>
-<li>Tắt hệ thống báo động, bật điện và máy lạnh.</li>
-<li>Khởi động máy pha, đợi đủ áp suất (khoảng 20 phút).</li>
-<li>Xay thử và nếm espresso đầu ngày, điều chỉnh độ xay.</li>
-<li>Kiểm tra tủ mát, sữa tươi, trái cây và ghi chú hạn dùng.</li>
-<li>Lau bàn ghế, kiểm tra nhà vệ sinh, bật nhạc nền.</li>
-</ol>`,
-  },
-  {
-    title: 'Công thức Cold brew cam',
-    category: DocumentCategory.RECIPE,
-    content: `<p><strong>Nguyên liệu (1 ly 450ml):</strong></p>
-<ul>
-<li>120ml cold brew (ủ 18 giờ).</li>
-<li>60ml nước cam vắt tươi.</li>
-<li>10ml siro đường (tuỳ khẩu vị).</li>
-<li>Đá viên đầy ly.</li>
-</ul>
-<p><strong>Cách làm:</strong> cho đá vào ly, đổ nước cam và siro, rót cold brew từ từ lên trên để tạo lớp. Trang trí lát cam.</p>`,
-  },
-  {
-    title: 'Tiêu chuẩn chất lượng espresso',
-    category: DocumentCategory.QUALITY_STANDARD,
-    content: `<ul>
-<li>Liều lượng: 18g cà phê, chiết xuất 36g trong 25–30 giây.</li>
-<li>Nhiệt độ nước: 92–94°C.</li>
-<li>Crema vàng nâu, dày khoảng 3–4mm.</li>
-<li>Bỏ ly espresso nếu chiết xuất ngoài khoảng thời gian trên và điều chỉnh lại độ xay.</li>
-</ul>`,
-  },
-];
-
-export const ANNOUNCEMENTS = [
-  {
-    title: 'Họp toàn hệ thống cuối tháng',
-    content: 'Cuộc họp toàn hệ thống diễn ra vào 14:00 thứ Bảy cuối tháng tại S+ Cầu Giấy. Quản lý cửa hàng sắp xếp ca để nhân viên có thể tham dự.',
-    pinned: true,
-  },
-  {
-    title: 'Đăng ký đồng phục mới',
-    content: 'Nhân viên vui lòng đăng ký size áo đồng phục mới với quản lý cửa hàng trước cuối tuần này.',
-    pinned: false,
-  },
-];
-
-export const SCHEDULE_ENTRIES = [
-  {
-    title: 'Đào tạo barista nâng cao',
-    description: 'Buổi đào tạo về latte art và quy trình chiết xuất espresso.',
-    startInDays: 3,
-    hours: 3,
-    location: 'S+ Coffee Cầu Giấy',
-  },
-  {
-    title: 'Họp toàn hệ thống',
-    description: 'Tổng kết tháng và công bố bộ sưu tập đồ uống mùa thu.',
-    startInDays: 9,
-    hours: 2,
-    location: 'S+ Coffee Cầu Giấy',
-  },
-  {
-    title: 'Ngày hội “Cho đi” tại cửa hàng Đống Đa',
-    description: 'Phát cà phê treo và trao sách cho cộng đồng.',
-    startInDays: 16,
-    hours: 4,
-    location: 'S+ Coffee Đống Đa',
-  },
-];
+export const INTERNAL_NOTICES: InternalNotices = {
+  ...DEFAULT_INTERNAL_NOTICES,
+  items: [
+    { title: 'Lịch Làm', url: 'https://example.com/splus/lich-lam' },
+    { title: 'Update Quy Chuẩn', url: 'https://example.com/splus/quy-chuan' },
+    { title: 'Update Tiêu chuẩn', url: 'https://example.com/splus/tieu-chuan' },
+    { title: 'Công Thức Mới', url: 'https://example.com/splus/cong-thuc-moi' },
+    { title: 'Lịch Kiểm Tra', url: 'https://example.com/splus/lich-kiem-tra' },
+    { title: 'Update Quyền Lợi', url: '/internal/people/' },
+  ],
+};

@@ -1,32 +1,27 @@
+import * as bcrypt from 'bcrypt';
 import { DataSource, EntityManager } from 'typeorm';
 import AppDataSource from './data-source';
 import {
-  ANNOUNCEMENTS,
   CONTACT_SETTINGS,
-  DOCUMENTS,
   HOME_SETTINGS,
+  INTERNAL_NOTICES,
   JOBS,
   POSTS,
   PRODUCTS,
-  SCHEDULE_ENTRIES,
-  STORES,
   STORY_BLOCKS,
   TEAM_MEMBERS,
 } from './seed-data';
-import { MediaType, ProductStatus } from '../common/enums';
-import { Document } from '../modules/documents/entities/document.entity';
-import { InternalAnnouncement } from '../modules/internal-announcements/entities/internal-announcement.entity';
-import { ScheduleEntry } from '../modules/internal-announcements/entities/schedule-entry.entity';
+import { AdminRole, MediaType, ProductStatus } from '../common/enums';
+import { Admin } from '../modules/admins/entities/admin.entity';
 import { Job } from '../modules/jobs/entities/job.entity';
 import { Media } from '../modules/media/entities/media.entity';
 import { Post } from '../modules/posts/entities/post.entity';
 import { ProductPhoto } from '../modules/products/entities/product-photo.entity';
 import { Product } from '../modules/products/entities/product.entity';
 import { SiteSetting } from '../modules/site-settings/entities/site-setting.entity';
-import { StorePhoto } from '../modules/stores/entities/store-photo.entity';
-import { Store } from '../modules/stores/entities/store.entity';
 import { StoryBlock } from '../modules/story/entities/story-block.entity';
 import { TeamMember } from '../modules/story/entities/team-member.entity';
+import { DEFAULT_INTERNAL_PEOPLE } from '../modules/site-settings/internal-settings';
 
 /**
  * Fills the database with demo content so the public website and the CMS are
@@ -77,7 +72,10 @@ async function seedProducts(em: EntityManager): Promise<number> {
   const repo = em.getRepository(Product);
   const photoRepo = em.getRepository(ProductPhoto);
   for (const [i, p] of PRODUCTS.entries()) {
-    const media = await upsertMedia(em, p.photo.split('/').pop()!.replace('.svg', ''));
+    const media = await upsertMedia(
+      em,
+      p.photo.split('/').pop()!.replace('.svg', ''),
+    );
     const product =
       (await repo.findOne({ where: { name: p.name } })) ??
       repo.create({ name: p.name });
@@ -86,8 +84,9 @@ async function seedProducts(em: EntityManager): Promise<number> {
       drinkSubType: p.drinkSubType ?? null,
       merchandiseSubType: p.merchandiseSubType ?? null,
       description: p.description,
-      price: p.price.toFixed(2),
+      price: p.price === null ? null : p.price.toFixed(2),
       isNew: p.isNew ?? false,
+      isBestSeller: p.isBestSeller ?? false,
       status: ProductStatus.ACTIVE,
       sortOrder: i + 1,
       photos: undefined,
@@ -95,38 +94,14 @@ async function seedProducts(em: EntityManager): Promise<number> {
     const saved = await repo.save(product);
     await photoRepo.delete({ productId: saved.id });
     await photoRepo.save(
-      photoRepo.create({ productId: saved.id, mediaId: media.id, sortOrder: 0 }),
+      photoRepo.create({
+        productId: saved.id,
+        mediaId: media.id,
+        sortOrder: 0,
+      }),
     );
   }
   return PRODUCTS.length;
-}
-
-async function seedStores(em: EntityManager): Promise<number> {
-  const repo = em.getRepository(Store);
-  const photoRepo = em.getRepository(StorePhoto);
-  for (const [i, s] of STORES.entries()) {
-    const store =
-      (await repo.findOne({ where: { name: s.name } })) ??
-      repo.create({ name: s.name });
-    Object.assign(store, {
-      address: s.address,
-      phone: s.phone,
-      googleMapsUrl: s.googleMapsUrl,
-      description: s.description,
-      isActive: true,
-      sortOrder: i + 1,
-      photos: undefined,
-    });
-    const saved = await repo.save(store);
-    await photoRepo.delete({ storeId: saved.id });
-    for (const [order, photo] of s.photos.entries()) {
-      const media = await upsertMedia(em, photo);
-      await photoRepo.save(
-        photoRepo.create({ storeId: saved.id, mediaId: media.id, sortOrder: order }),
-      );
-    }
-  }
-  return STORES.length;
 }
 
 async function seedPosts(em: EntityManager): Promise<number> {
@@ -199,57 +174,33 @@ async function seedStory(em: EntityManager): Promise<number> {
   return STORY_BLOCKS.length + TEAM_MEMBERS.length;
 }
 
-async function seedStaffArea(em: EntityManager): Promise<number> {
-  const docs = em.getRepository(Document);
-  for (const d of DOCUMENTS) {
-    const doc =
-      (await docs.findOne({ where: { title: d.title } })) ??
-      docs.create({ title: d.title });
-    Object.assign(doc, { category: d.category, content: d.content, fileId: null });
-    await docs.save(doc);
-  }
-
-  const announcements = em.getRepository(InternalAnnouncement);
-  for (const a of ANNOUNCEMENTS) {
-    const row =
-      (await announcements.findOne({ where: { title: a.title } })) ??
-      announcements.create({ title: a.title });
-    Object.assign(row, {
-      content: a.content,
-      pinnedUntil: a.pinned ? new Date(Date.now() + 30 * 86_400_000) : null,
-    });
-    await announcements.save(row);
-  }
-
-  const schedule = em.getRepository(ScheduleEntry);
-  for (const s of SCHEDULE_ENTRIES) {
-    const start = new Date(Date.now() + s.startInDays * 86_400_000);
-    start.setHours(9, 0, 0, 0);
-    const row =
-      (await schedule.findOne({ where: { title: s.title } })) ??
-      schedule.create({ title: s.title });
-    Object.assign(row, {
-      description: s.description,
-      startAt: start,
-      endAt: new Date(start.getTime() + s.hours * 3_600_000),
-      location: s.location,
-    });
-    await schedule.save(row);
-  }
-  return DOCUMENTS.length + ANNOUNCEMENTS.length + SCHEDULE_ENTRIES.length;
+/** A demo staff account (read-only, lands on the "Nội bộ" pages) to try the employee flow. */
+async function seedEmployee(em: EntityManager): Promise<string> {
+  const email = 'nhanvien@st-coffee.local';
+  const repo = em.getRepository(Admin);
+  const row =
+    (await repo.findOne({ where: { email } })) ?? repo.create({ email });
+  Object.assign(row, {
+    fullName: 'Nhân viên S+',
+    role: AdminRole.EMPLOYEE,
+    passwordHash: await bcrypt.hash('ChangeMe123!', 10),
+  });
+  await repo.save(row);
+  return `${email} / ChangeMe123!`;
 }
 
 async function seed(dataSource: DataSource) {
   await dataSource.transaction(async (em) => {
     await upsertSetting(em, 'contact', CONTACT_SETTINGS);
     await upsertSetting(em, 'home', HOME_SETTINGS);
-    console.log('✔ site settings (contact, home)');
+    await upsertSetting(em, 'internal-notices', INTERNAL_NOTICES);
+    await upsertSetting(em, 'internal-people', DEFAULT_INTERNAL_PEOPLE);
+    console.log('✔ site settings (contact, home, internal pages)');
     console.log(`✔ ${await seedStory(em)} story blocks + team members`);
     console.log(`✔ ${await seedProducts(em)} products`);
-    console.log(`✔ ${await seedStores(em)} stores`);
     console.log(`✔ ${await seedPosts(em)} posts`);
     console.log(`✔ ${await seedJobs(em)} jobs`);
-    console.log(`✔ ${await seedStaffArea(em)} documents / announcements / schedule`);
+    console.log(`✔ demo employee ${await seedEmployee(em)}`);
   });
 }
 

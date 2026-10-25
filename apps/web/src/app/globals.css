@@ -189,6 +189,28 @@
 }
 
 @layer components {
+  /*
+   * Public-site typography — the fonts of the Canva design (display-font.ts).
+   * Alatsi has a single weight, so never fake a bold on top of it.
+   */
+  .site-type {
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
+  }
+  .font-body {
+    font-family: var(--font-body-serif), Georgia, serif;
+    font-weight: 500;
+  }
+  .font-ui {
+    font-family: var(--font-ui), system-ui, sans-serif;
+  }
+  .font-title {
+    font-family: var(--font-title), system-ui, sans-serif;
+    font-weight: 700;
+  }
+
   /* Subtle scrollbars for nav / panels */
   .scrollbar-thin {
     --scroll-thumb: color-mix(in oklch, currentColor 22%, transparent);
@@ -271,4 +293,39 @@
     );
     background-size: 14px 14px;
   }
+}
+
+/* hides the scrollbar of horizontally scrolling chip bars */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tailwind v4's preflight leaves buttons with the default arrow cursor: restore
+   the pointer on everything clickable (unlayered, so it also beats the
+   `cursor-default` baked into the dropdown/select item components). */
+a[href],
+button:not(:disabled),
+summary,
+label[for],
+select:not(:disabled),
+input:is([type="checkbox"], [type="radio"], [type="submit"], [type="button"], [type="file"]):not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([data-disabled]),
+[role="menuitemcheckbox"]:not([data-disabled]),
+[role="menuitemradio"]:not([data-disabled]),
+[role="option"]:not([data-disabled]),
+[role="switch"]:not([data-disabled]),
+[role="checkbox"]:not([data-disabled]),
+[role="radio"]:not([data-disabled]),
+[role="combobox"]:not([data-disabled]) {
+  cursor: pointer;
+}
+button:disabled,
+[aria-disabled="true"],
+[data-disabled] {
+  cursor: not-allowed;
 }

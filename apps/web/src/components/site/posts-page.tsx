@@ -15,101 +15,53 @@ import { Chips, PageHero, Pager, SiteEmpty } from "./ui";
 
 const PAGE_SIZE = 9;
 
-/**
- * "Tin tức - Sự kiện" and "Cho đi" are the same content model (Posts) split by
- * type, so one pair of list/detail components serves both pages.
- */
-export type PostsKind = "news" | "give-back";
+const NEWS_TYPES = [
+  PostType.ANNOUNCEMENT,
+  PostType.COMING_SOON,
+  PostType.NEW_PRODUCT,
+  PostType.CULTURE_ARTICLE,
+];
 
-const KINDS: Record<
-  PostsKind,
-  {
-    base: string;
-    detail: string;
-    crumb: string;
-    eyebrow: string;
-    title: string;
-    description: string;
-    /** Types offered as filter pills (empty = no filter row). */
-    types: PostType[];
-    type?: PostType;
-    excludeType?: PostType;
-    empty: string;
-  }
-> = {
-  news: {
-    base: "/news/",
-    detail: "/news/post/",
-    crumb: "Tin tức",
-    eyebrow: "Tin tức - Sự kiện",
-    title: "Có gì mới ở S+",
-    description: "Thông báo, chương trình sắp ra mắt, sản phẩm mới và những câu chuyện văn hoá.",
-    types: [
-      PostType.ANNOUNCEMENT,
-      PostType.COMING_SOON,
-      PostType.NEW_PRODUCT,
-      PostType.CULTURE_ARTICLE,
-    ],
-    excludeType: PostType.GIVE_BACK,
-    empty: "Chưa có bài viết nào.",
-  },
-  "give-back": {
-    base: "/give-back/",
-    detail: "/give-back/post/",
-    crumb: "Cho đi",
-    eyebrow: "Cho đi",
-    title: "Nơi ấm áp được trao đi",
-    description: "Những hoạt động thiện nguyện và lời tri ân S+ gửi tới khách hàng, cộng đồng.",
-    types: [],
-    type: PostType.GIVE_BACK,
-    empty: "Những hoạt động Cho đi sẽ sớm được chia sẻ ở đây.",
-  },
-};
+const postHref = (slug: string) => `/news/post/?slug=${encodeURIComponent(slug)}`;
 
-const postHref = (kind: PostsKind, slug: string) =>
-  `${KINDS[kind].detail}?slug=${encodeURIComponent(slug)}`;
-
-export function PostsListContent({ kind }: { kind: PostsKind }) {
-  const cfg = KINDS[kind];
+/** "Tin tức - Sự kiện" — published posts, filterable by type. */
+export function PostsListContent() {
   const [type, setType] = useState<PostType | undefined>();
   const [page, setPage] = useState(1);
-  const { data, isLoading } = usePublicPosts({
-    limit: PAGE_SIZE,
-    page,
-    type: cfg.type ?? type,
-    excludeType: cfg.excludeType,
-  });
+  const { data, isLoading } = usePublicPosts({ limit: PAGE_SIZE, page, type });
   const posts = data?.data ?? [];
   const featured = page === 1 && posts.length > 1 ? posts[0] : undefined;
   const rest = featured ? posts.slice(1) : posts;
 
   return (
     <>
-      <PageHero eyebrow={cfg.eyebrow} title={cfg.title} description={cfg.description} />
+      <PageHero
+        eyebrow="Tin tức - Sự kiện"
+        title="Có gì mới ở S+"
+        description="Thông báo, chương trình sắp ra mắt, sản phẩm mới và những câu chuyện văn hoá."
+      />
       <section className="pb-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          {cfg.types.length > 0 && (
-            <Chips
-              options={[
-                { value: undefined, label: "Tất cả" },
-                ...cfg.types.map((t) => ({ value: t, label: POST_TYPE_LABELS[t] })),
-              ]}
-              value={type}
-              onChange={(v) => {
-                setType(v);
-                setPage(1);
-              }}
-            />
-          )}
+          <Chips
+            options={[
+              { value: undefined, label: "Tất cả" },
+              ...NEWS_TYPES.map((t) => ({ value: t, label: POST_TYPE_LABELS[t] })),
+            ]}
+            value={type}
+            onChange={(v) => {
+              setType(v);
+              setPage(1);
+            }}
+          />
 
           {isLoading ? null : posts.length === 0 ? (
-            <SiteEmpty icon={Newspaper} title={cfg.empty} />
+            <SiteEmpty icon={Newspaper} title="Chưa có bài viết nào." />
           ) : (
             <>
               {featured && (
                 <Reveal className="mt-10">
                   <Link
-                    href={postHref(kind, featured.slug)}
+                    href={postHref(featured.slug)}
                     className="group grid grid-cols-1 overflow-hidden rounded-3xl border border-[#960000]/10 bg-white shadow-sm transition-shadow hover:shadow-xl md:grid-cols-2"
                   >
                     <div className="relative aspect-video bg-[#960000]/5 md:aspect-auto md:min-h-72">
@@ -138,7 +90,7 @@ export function PostsListContent({ kind }: { kind: PostsKind }) {
                         {featured.title}
                       </h2>
                       {featured.excerpt && (
-                        <p className="mt-3 line-clamp-4 leading-relaxed text-stone-600">
+                        <p className="mt-3 line-clamp-4 leading-relaxed text-stone-800 font-body">
                           {featured.excerpt}
                         </p>
                       )}
@@ -154,7 +106,7 @@ export function PostsListContent({ kind }: { kind: PostsKind }) {
               <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {rest.map((post, i) => (
                   <Reveal key={post.id} delay={(i % 3) * 100}>
-                    <PostCard post={post} href={postHref(kind, post.slug)} />
+                    <PostCard post={post} href={postHref(post.slug)} />
                   </Reveal>
                 ))}
               </div>
@@ -168,15 +120,10 @@ export function PostsListContent({ kind }: { kind: PostsKind }) {
   );
 }
 
-function PostDetailInner({ kind }: { kind: PostsKind }) {
-  const cfg = KINDS[kind];
+function PostDetailInner() {
   const slug = useSearchParams().get("slug") ?? undefined;
   const { data: post, isLoading, isError } = usePublicPost(slug);
-  const { data: more } = usePublicPosts({
-    limit: 4,
-    type: cfg.type,
-    excludeType: cfg.excludeType,
-  });
+  const { data: more } = usePublicPosts({ limit: 4 });
 
   if (isLoading || (!post && !isError)) return <div className="min-h-[60vh]" />;
   if (isError || !post) {
@@ -184,7 +131,7 @@ function PostDetailInner({ kind }: { kind: PostsKind }) {
       <SiteEmpty
         icon={Newspaper}
         title="Không tìm thấy bài viết"
-        action={{ href: cfg.base, label: `Xem tất cả ${cfg.crumb.toLowerCase()}` }}
+        action={{ href: "/news/", label: "Xem tất cả tin tức" }}
       />
     );
   }
@@ -197,7 +144,7 @@ function PostDetailInner({ kind }: { kind: PostsKind }) {
         eyebrow={POST_TYPE_LABELS[post.type]}
         title={post.title}
         description={formatDate(post.publishedAt) ?? undefined}
-        crumbs={[{ label: cfg.crumb, href: cfg.base }]}
+        crumbs={[{ label: "Tin tức", href: "/news/" }]}
       />
       <article className="mx-auto max-w-3xl px-4 pb-20 sm:px-6">
         {post.coverImage?.url && (
@@ -211,7 +158,7 @@ function PostDetailInner({ kind }: { kind: PostsKind }) {
             />
           </div>
         )}
-        <RichContent html={post.content} className="text-[1.05rem] leading-loose text-stone-700" />
+        <RichContent html={post.content} className="text-[1.05rem] leading-loose text-stone-950 font-body" />
       </article>
 
       {others.length > 0 && (
@@ -225,7 +172,7 @@ function PostDetailInner({ kind }: { kind: PostsKind }) {
             </h2>
             <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
               {others.map((p) => (
-                <PostCard key={p.id} post={p} href={postHref(kind, p.slug)} />
+                <PostCard key={p.id} post={p} href={postHref(p.slug)} />
               ))}
             </div>
           </div>
@@ -236,10 +183,10 @@ function PostDetailInner({ kind }: { kind: PostsKind }) {
 }
 
 /** `.../post/?slug=...` — static export has no dynamic routes. */
-export function PostDetailContent({ kind }: { kind: PostsKind }) {
+export function PostDetailContent() {
   return (
     <Suspense fallback={null}>
-      <PostDetailInner kind={kind} />
+      <PostDetailInner />
     </Suspense>
   );
 }

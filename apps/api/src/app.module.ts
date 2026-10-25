@@ -13,12 +13,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AdminsModule } from './modules/admins/admins.module';
 import { MediaModule } from './modules/media/media.module';
 import { StoryModule } from './modules/story/story.module';
-import { StoresModule } from './modules/stores/stores.module';
 import { ProductsModule } from './modules/products/products.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { JobsModule } from './modules/jobs/jobs.module';
-import { DocumentsModule } from './modules/documents/documents.module';
-import { InternalAnnouncementsModule } from './modules/internal-announcements/internal-announcements.module';
 import { SiteSettingsModule } from './modules/site-settings/site-settings.module';
 import { BackupsModule } from './modules/backups/backups.module';
 import { RequestLogModule } from './modules/request-log/request-log.module';
@@ -61,12 +58,9 @@ import { RequestLogInterceptor } from './modules/request-log/request-log.interce
     AdminsModule,
     MediaModule,
     StoryModule,
-    StoresModule,
     ProductsModule,
     PostsModule,
     JobsModule,
-    DocumentsModule,
-    InternalAnnouncementsModule,
     SiteSettingsModule,
     BackupsModule,
     RequestLogModule,

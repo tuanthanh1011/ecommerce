@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { Paginated } from "@/hooks/use-stores";
+import type { Paginated } from "@/hooks/pagination";
 import type {
   DrinkSubType,
   MerchandiseSubType,
@@ -24,6 +24,7 @@ export interface Product {
   price: string | null;
   status: ProductStatus;
   isNew: boolean;
+  isBestSeller: boolean;
   photos: ProductPhoto[];
 }
 
@@ -36,6 +37,7 @@ export interface ProductInput {
   price?: string;
   status?: ProductStatus;
   isNew?: boolean;
+  isBestSeller?: boolean;
 }
 
 const KEY = "products";

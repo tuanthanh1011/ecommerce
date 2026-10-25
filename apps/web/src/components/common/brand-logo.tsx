@@ -21,7 +21,7 @@ export function BrandLogo({
   return (
     <span className={cn("flex flex-col text-lg leading-tight", className)}>
       <span
-        className="font-semibold tracking-tight"
+        className="tracking-wide uppercase"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {compact ? "S+" : "S+ Coffee"}

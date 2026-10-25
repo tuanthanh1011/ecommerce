@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/common/brand-logo";
+import { AccountButton } from "./account";
 import { DesktopNav, LandingMobileNav } from "./landing-nav";
 import { MAROON } from "./theme";
 
@@ -10,21 +11,17 @@ export function SiteHeader() {
       className="sticky top-0 z-40 text-[#f3e9dc] shadow-sm"
       style={{ backgroundColor: MAROON }}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between sm:h-[72px] px-4 sm:px-6 lg:px-8">
         <Link href="/">
           <BrandLogo
+            className="text-[22px] sm:text-3xl"
             subtitle="Nơi ấm áp được trao đi - Nơi chúng ta thuộc về"
-            subtitleClassName="hidden text-[#f3e9dc] sm:block"
+            subtitleClassName="hidden text-[#f3e9dc] sm:block sm:text-xs"
           />
         </Link>
         <DesktopNav />
         <div className="flex items-center gap-2">
-          <Link
-            href="/admin/login/"
-            className="hidden h-9 items-center rounded-full whitespace-nowrap border border-[#f3e9dc]/40 px-4 text-xs font-medium text-[#f3e9dc] transition-colors hover:bg-[#f3e9dc]/10 sm:inline-flex"
-          >
-            Đăng Nhập
-          </Link>
+          <AccountButton />
           <LandingMobileNav />
         </div>
       </div>

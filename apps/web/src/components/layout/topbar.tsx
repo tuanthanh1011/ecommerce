@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCurrentAdmin, useIsReadOnly } from "@/hooks/use-auth";
+import { useCurrentAdmin } from "@/hooks/use-auth";
 import { apiClient } from "@/lib/api-client";
 import { clearTokens, getRefreshToken } from "@/lib/auth";
 import { initials } from "@/lib/format";
@@ -28,7 +28,6 @@ function Breadcrumbs() {
   const item = findNavItemForPath(pathname);
   const isForm = pathname?.includes("/form");
   const isHome = item?.href === "/admin/dashboard";
-  const readOnly = useIsReadOnly();
   const { data: admin } = useCurrentAdmin();
 
   const crumbs: { label: string; href?: string }[] = [
@@ -41,7 +40,7 @@ function Breadcrumbs() {
   }
   if (isForm) {
     crumbs.push({
-      label: searchParams.get("id") ? (readOnly ? "Chi tiết" : "Chỉnh sửa") : "Tạo mới",
+      label: searchParams.get("id") ? "Chỉnh sửa" : "Tạo mới",
     });
   }
 

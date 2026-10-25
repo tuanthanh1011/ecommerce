@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { Paginated } from "@/hooks/use-stores";
+import type { Paginated } from "@/hooks/pagination";
 import type { MediaRecord } from "@/lib/upload";
 
 const KEY = "media";
